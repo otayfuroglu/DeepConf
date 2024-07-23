@@ -712,7 +712,7 @@ class confGen:
         #  print(ase_atoms.get_potential_energy(), ",eV", file=file_csv)
 
         self.rw_mol = self.aseAtoms2rwMol(ase_atoms)
-        return ase_atoms.get_potential_energy()
+        return ase_atoms, ase_atoms.get_potential_energy()
 
 
         #  return ase_atoms.get_potential_energy(), ase_atoms

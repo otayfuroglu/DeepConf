@@ -3,7 +3,7 @@ from rdkit import Chem
 from rdkit.Chem import rdMolAlign
 import numpy as np
 
-from ase.io import read
+from ase.io import read, write
 from core_conf import confGen
 import argparse
 import os, sys, shutil
@@ -114,8 +114,9 @@ def runConfGen(file_name):
     lig.setOptParams(fmax=thr_fmax, maxiter=args.maxiter)
 
     if pre_optimization_lig:
-        print("G16 Optimization process.. before generations")
-        lig.geomOptimization()
+        print("Pre-Optimization process.. before generations")
+        ase_atoms, _ = lig.geomOptimization()
+        write(f"pre_opt_{file_base}.xyz", ase_atoms)
 
     if genconformer:
         out_file_path="%s/%sminE_conformer.sdf"%(WORK_DIR, prefix)
@@ -134,15 +135,15 @@ def runConfGen(file_name):
         print("Conformer generation process is done")
         if not optimization_conf and optimization_lig:
             print("Optimization for minumum energy conformer")
-            e = lig.geomOptimization()
-            e_file = open("%s/global_%s%s_energy.txt"%(WORK_DIR, prefix, file_base) , "w")
+            _, e = lig.geomOptimization()
+            _, e_file = open("%s/global_%s%s_energy.txt"%(WORK_DIR, prefix, file_base) , "w")
             #  lig.geomOptimization()
 
     else:
         out_file_path="%s/global_%s%s.sdf"%(WORK_DIR, prefix, file_base)
         # geometry optimizaton for ligand
         if  optimization_lig:
-            e = lig.geomOptimization()
+            _, e = lig.geomOptimization()
             e_file = open("%s/global_%s%s_energy.txt"%(WORK_DIR, prefix, file_base) , "w")
             print(e, " eV", file=e_file)
             #  ase_atoms = lig.rwMol2AseAtoms()
