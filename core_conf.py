@@ -711,8 +711,12 @@ class confGen:
         #  file_csv = open("%s/optmized_energy.csv" %self.WORK_DIR, "w")
         #  print(ase_atoms.get_potential_energy(), ",eV", file=file_csv)
 
-        self.rw_mol = self.aseAtoms2rwMol(ase_atoms)
-        return ase_atoms, ase_atoms.get_potential_energy()
+        try:
+            self.rw_mol = self.aseAtoms2rwMol(ase_atoms)
+        except:
+            prin("Worning: Ase atoms can not transform to rdkit rw mol")
+        finally:
+            return ase_atoms, ase_atoms.get_potential_energy()
 
 
         #  return ase_atoms.get_potential_energy(), ase_atoms
