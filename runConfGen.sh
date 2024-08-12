@@ -1,9 +1,9 @@
 #! /usr/bin/env bash
 
-ligPrep_DIR="$HOME//workspace/mdutils/automd/ligprep"
+ligPrep_DIR="$HOME/Desktop/ConfGen/"
 PYTHON_DIR="$HOME/miniconda3/bin"
 
-struct_dir=test_files1
+struct_dir=geoms
 
 # adding hydrogen if missing (yes/no)
 add_hydrogen=no
@@ -36,7 +36,7 @@ optimization_conf=yes
 optimization_lig=no
 
 # set number of procssors for g16 calcultor (default=all cpu)
-nprocs=32
+nprocs=8
 
 # set thrshold fmax for optimization (default=0.01)
 thr_fmax=0.2
@@ -44,9 +44,12 @@ thr_fmax=0.2
 #maximum iteration for optimization
 maxiter=500
 
+# number of fold for conformer generation
+nfold=2
+
 
 $PYTHON_DIR/python $ligPrep_DIR/runConfGen.py $struct_dir $add_hydrogen $caculator_type\
 	$optimization_method $optimization_conf $optimization_lig $pre_optimization_lig $genconformer\
-       	$nprocs $thr_fmax $maxiter $ETKDG $num_conformers $max_attempts $prune_rms_thresh $opt_prune_rms_thresh $opt_prune_diffE_thresh
+       	$nprocs $thr_fmax $maxiter $ETKDG $num_conformers $max_attempts $prune_rms_thresh $opt_prune_rms_thresh $opt_prune_diffE_thresh $nfold
 
 

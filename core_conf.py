@@ -260,12 +260,12 @@ class confGen:
                     torsion_points.append(torsions[0][0])
         return(torsion_points)
 
-    def _getNumConfs(self, scaled=1):
+    def _getNumConfs(self, nfold, scaled=1):
         n_torsions = len(self._getTorsionPoints())
         if n_torsions >= 10:
             return 8096
         else:
-            return int(scaled * 2 ** n_torsions)
+            return int(scaled * nfold ** n_torsions)
 
     #  def _getConfDistMatrix(self, mol, conformerIds):
 
@@ -418,7 +418,8 @@ class confGen:
                          saveConfs=True,
                          useExpTorsionAnglePrefs=True,
                          useBasicKnowledge=True,
-                         enforceChirality=True
+                         enforceChirality=True,
+                         nfold=2,
                         ):
 
         import copy
@@ -426,8 +427,8 @@ class confGen:
         #  self.addHwithRD()
         print("Woking on conformer generation process")
         mol = copy.deepcopy(self.rw_mol)
-        if numConfs == 0 or numConfs < self._getNumConfs(scaled=10):
-            numConfs = self._getNumConfs(scaled=10)
+        if numConfs == 0 or numConfs < self._getNumConfs(nfold, scaled=10):
+            numConfs = self._getNumConfs(nfold, scaled=10)
             print(f"Maximum number of conformers setting to {numConfs}")
 
         if ETKDG:
@@ -461,7 +462,7 @@ class confGen:
 
         print("Processing k-means clustering")
         cluster_conf_id = self._getClusterKmeansFromConfIds(conformerIds, dist_matrix,
-                                           n_group=self._getNumConfs(scaled=1)
+                                           n_group=self._getNumConfs(nfold, scaled=1)
                                           )
         print("Calculating SP energies")
         minEConformerIDs = []
