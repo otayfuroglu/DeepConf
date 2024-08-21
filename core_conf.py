@@ -19,6 +19,7 @@ from functools import wraps
 from scipy.cluster.vq import kmeans, vq, whiten
 from scipy.cluster.hierarchy import linkage, fcluster
 
+from random import sample
 
 NPROCS_ALL = int(cpu_count())
 print("Number of total cpu core: ", NPROCS_ALL)
@@ -406,7 +407,7 @@ class confGen:
         os.rename(f"{conf_dir}/pruned_{global_minE_file}", f"{conf_dir}/global_minE_{global_minE_file}")
         # NOTE
 
-    def genMinEGonformer(self, file_path,
+    def genGonformers(self, file_path,
                          numConfs=100,
                          ETKDG=False,
                          maxAttempts=10000,
@@ -420,6 +421,7 @@ class confGen:
                          useBasicKnowledge=True,
                          enforceChirality=True,
                          nfold=2,
+                         npick=2,
                         ):
 
         import copy
@@ -466,12 +468,17 @@ class confGen:
                                           )
         print("Calculating SP energies")
         minEConformerIDs = []
+        all_picked_confs = []
+
         for cluster, clustered_confIds in cluster_conf_id.items():
 
             if saveConfs:
                 CONF_DIR = self.WORK_DIR + f"/confs_cluster_{cluster}"
                 if not os.path.exists(CONF_DIR):
                     os.mkdir(CONF_DIR)
+
+            # to pick conformer randomly
+            rndConformerIDs = sample(range(len(clustered_confIds)), npick)
 
             for i, conformerId  in enumerate(clustered_confIds):
                 #  print("%d. conformer processing..." %i)
@@ -500,6 +507,10 @@ class confGen:
 
             minEConformerIDs.append(minEConformerID)
 
+            picked_confs = [minEConformerID] + rndConformerIDs
+            all_picked_confs += picked_confs
+
+
             #  print(minE, minEGonformerID)
             #  if numConfs > 1:
             #  if not optimization_conf:
@@ -520,7 +531,7 @@ class confGen:
         # close to csv file
         file_csv.close()
 
-        MIN_E_CONF_DIR = self.WORK_DIR + "/opt_minE_confs"
+        MIN_E_CONF_DIR = self.WORK_DIR + "/opt_picked_confs"
         if not os.path.exists(MIN_E_CONF_DIR):
             os.mkdir(MIN_E_CONF_DIR)
 
@@ -528,7 +539,8 @@ class confGen:
             opt_file_csv = open("%s/opt_confs_energies.csv" %MIN_E_CONF_DIR, "w")
             print("FileName, Energy(eV), EnergyPerAtom(eV)", file=opt_file_csv)
 
-            for i, conformerId  in enumerate(minEConformerIDs):
+            #  for i, conformerId  in enumerate(minEConformerIDs):
+            for i, conformerId  in enumerate(all_picked_confs):
                 e, ase_atoms = self._geomOptimizationConf(mol, conformerId)
                 prefix = "opt_"
                 conf_file_path = "%s/%sconf_%d.sdf"%(MIN_E_CONF_DIR, prefix, conformerId)

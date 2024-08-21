@@ -35,6 +35,7 @@ parser.add_argument("prune_rms_thresh", type=float, default=0.2)
 parser.add_argument("opt_prune_rms_thresh", type=float, default=0.2)
 parser.add_argument("opt_prune_diffE_thresh", type=float, default=0.001)
 parser.add_argument("nfold", type=int, default=2)
+parser.add_argument("npick", type=int, default=2)
 
 
 def calcFuncRunTime(func):
@@ -121,7 +122,7 @@ def runConfGen(file_name):
 
     if genconformer:
         out_file_path="%s/%sminE_conformer.sdf"%(WORK_DIR, prefix)
-        lig.genMinEGonformer(
+        lig.genGonformers(
             file_path=out_file_path,
             numConfs=num_conformers,
             ETKDG=ETKDG,
@@ -132,6 +133,7 @@ def runConfGen(file_name):
             opt_prune_rms_thresh=opt_prune_rms_thresh,
             opt_prune_diffE_thresh=opt_prune_diffE_thresh,
             nfold=nfold,
+            npick=npick,
         )
 
         print("Conformer generation process is done")
@@ -187,6 +189,7 @@ if __name__ == "__main__":
     opt_prune_rms_thresh = args.opt_prune_rms_thresh
     opt_prune_diffE_thresh = args.opt_prune_diffE_thresh
     nfold = args.nfold
+    npick = args.npick
 
     file_names = [item for item in os.listdir(structure_dir) if not item.startswith(".")]
     failed_csv = open("failed_files.csv", "w")

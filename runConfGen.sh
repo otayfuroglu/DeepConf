@@ -46,10 +46,12 @@ maxiter=500
 
 # number of fold for conformer generation
 nfold=2
+# to pick randomly extra conformer
+npick=2
 
 
 $PYTHON_DIR/python $ligPrep_DIR/runConfGen.py $struct_dir $add_hydrogen $caculator_type\
 	$optimization_method $optimization_conf $optimization_lig $pre_optimization_lig $genconformer\
-       	$nprocs $thr_fmax $maxiter $ETKDG $num_conformers $max_attempts $prune_rms_thresh $opt_prune_rms_thresh $opt_prune_diffE_thresh $nfold
+       	$nprocs $thr_fmax $maxiter $ETKDG $num_conformers $max_attempts $prune_rms_thresh $opt_prune_rms_thresh $opt_prune_diffE_thresh $nfold $npick
 
 
