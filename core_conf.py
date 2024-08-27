@@ -484,9 +484,6 @@ class confGen:
                 if not os.path.exists(CONF_DIR):
                     os.mkdir(CONF_DIR)
 
-            # to pick conformer randomly
-            rndConformerIDs = sample(range(len(clustered_confIds)), npick)
-
             for i, conformerId  in enumerate(clustered_confIds):
                 #  print("%d. conformer processing..." %i)
                 if saveConfs:
@@ -513,6 +510,13 @@ class confGen:
                 print("%sconf_%d.sdf, %s"%(prefix, conformerId, e), file=file_csv)
 
             minEConformerIDs.append(minEConformerID)
+
+            # to pick conformer randomly
+            picked = False
+            while picked is False:
+                rndConformerIDs = sample(clustered_confIds, npick)
+                if minEConformerID not in rndConformerIDs:
+                    picked = True
 
             picked_confs = [minEConformerID] + rndConformerIDs
             all_picked_confs += picked_confs
