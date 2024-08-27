@@ -610,7 +610,7 @@ class confGen:
 
         self.calculator = Gaussian(
             label=label,
-            chk=chk,
+            #  chk=chk,
             nprocshared=nprocs,
             xc=xc,
             basis=basis,
