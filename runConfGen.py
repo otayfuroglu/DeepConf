@@ -70,6 +70,35 @@ def setG16calculator(lig, file_base, label, WORK_DIR):
     return lig
 
 
+def setGenConformers(lig, out_file_path, mmCalculator):
+    trial = lig.n_trial
+    while trial <= 3:
+        try:
+            lig.genGonformers(
+                file_path=out_file_path,
+                numConfs=num_conformers,
+                ETKDG=ETKDG,
+                maxAttempts=max_attempts,
+                pruneRmsThresh=prune_rms_thresh,
+                mmCalculator=mmCalculator,
+                optimization_conf=optimization_conf,
+                opt_prune_rms_thresh=opt_prune_rms_thresh,
+                opt_prune_diffE_thresh=opt_prune_diffE_thresh,
+                nfold=nfold,
+                npick=npick,)
+            pp
+        except:
+            print(f"Trail {trial} failed, attempting new one... ")
+            lig.increaseTrilNum()
+            trial = lig.n_trial
+            setGenConformers(lig, out_file_path, mmCalculator)
+        finally:
+            return lig
+    else:
+        print(f"{trial -1} attempts failed, Skipping...")
+        return None
+
+
 #  @calcFuncRunTime
 def runConfGen(file_name):
     "Starting ligand preparetion process... "
@@ -120,21 +149,12 @@ def runConfGen(file_name):
         ase_atoms, _ = lig.geomOptimization()
         write(f"pre_opt_{file_base}.xyz", ase_atoms)
 
+
     if genconformer:
         out_file_path="%s/%sminE_conformer.sdf"%(WORK_DIR, prefix)
-        lig.genGonformers(
-            file_path=out_file_path,
-            numConfs=num_conformers,
-            ETKDG=ETKDG,
-            maxAttempts=max_attempts,
-            pruneRmsThresh=prune_rms_thresh,
-            mmCalculator=mmCalculator,
-            optimization_conf=optimization_conf,
-            opt_prune_rms_thresh=opt_prune_rms_thresh,
-            opt_prune_diffE_thresh=opt_prune_diffE_thresh,
-            nfold=nfold,
-            npick=npick,
-        )
+        lig = setGenConformers(lig, out_file_path, mmCalculator)
+        if lig is None:
+            return None
 
         print("Conformer generation process is done")
         if not optimization_conf and optimization_lig:
@@ -201,7 +221,9 @@ if __name__ == "__main__":
         file_base = file_name.split(".")[0]
         #  try:
         s_time = time.time()
-        runConfGen(file_name)
+        result = runConfGen(file_name)
+        if result is None:
+            continue
 
         print(file_name, ",", "%.4f"%((time.time()-s_time)/60), file=fl_timing)
         #  except:

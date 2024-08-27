@@ -118,6 +118,13 @@ class confGen:
         # initialize optimization method
         self.opt_method = None
 
+        # trial number
+        self.n_trial = 1
+
+
+    def increaseTrilNum(self):
+        self.n_trial += 1
+
     def _getFileFormat(self, file_path=None):
         if file_path:
             return file_path.split(".")[-1]
