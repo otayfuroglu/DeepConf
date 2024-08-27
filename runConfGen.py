@@ -61,11 +61,13 @@ def getBoolStr(string):
 def setG16calculator(lig, file_base, label, WORK_DIR):
     lig.setG16Calculator(
             label="%s/g16_%s/%s"%(WORK_DIR, label, file_base),
-            chk="%s.chk"%file_base,
+            #  chk="%s.chk"%file_base,
+            chk="",
             nprocs=nprocs,
             xc="HF",
-            basis="6-31g*",
+            basis="3-21g",
             scf="maxcycle=100",
+            extra="nosymm",
     )
     return lig
 
