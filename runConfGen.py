@@ -86,7 +86,6 @@ def setGenConformers(lig, out_file_path, mmCalculator):
                 opt_prune_diffE_thresh=opt_prune_diffE_thresh,
                 nfold=nfold,
                 npick=npick,)
-            pp
         except:
             print(f"Trail {trial} failed, attempting new one... ")
             lig.increaseTrilNum()
