@@ -441,10 +441,16 @@ class confGen:
             print(f"Maximum number of conformers setting to {numConfs}")
 
         if ETKDG:
-            conformerIds = list(rdkit.Chem.AllChem.EmbedMultipleConfs(
+            #  conformerIds = list(rdkit.Chem.AllChem.EmbedMultipleConfs(
+            #      mol,
+            #      numConfs=numConfs,
+            #      numThreads=NPROCS_ALL,
+            #  ))
+            ps = rdkit.Chem.rdDistGeom.ETKDGv3()
+            conformerIds = list(rdkit.Chem.rdDistGeom.EmbedMultipleConfs(
                 mol,
-                numConfs=numConfs,
-                numThreads=NPROCS_ALL,
+                numConfs,
+                ps
             ))
         else:
             conformerIds = list(rdkit.Chem.AllChem.EmbedMultipleConfs(
