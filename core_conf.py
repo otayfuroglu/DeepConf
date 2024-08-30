@@ -736,7 +736,7 @@ class confGen:
             ase_atoms.set_calculator(self.calculator)
             #  self.dyn = LBFGS(ase_atoms)
             dyn = self._getOptMethod(ase_atoms)
-            dyn.run()
+            dyn.run(fmax=self.fmax, steps=self.maxiter)
 
         #  file_csv = open("%s/optmized_energy.csv" %self.WORK_DIR, "w")
         #  print(ase_atoms.get_potential_energy(), ",eV", file=file_csv)
