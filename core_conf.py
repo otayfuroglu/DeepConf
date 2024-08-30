@@ -701,7 +701,7 @@ class confGen:
 
         if self.optG16:
             dyn =  GaussianOptimizer(ase_atoms, self.calculator)
-            dyn.run(fmax='tight', steps=self.maxiter)
+            dyn.run(steps=self.maxiter)
         else:
             ase_atoms.set_calculator(self.calculator)
             dyn = self._getOptMethod(ase_atoms)
@@ -731,13 +731,12 @@ class confGen:
 
         if self.optG16:
             dyn =  GaussianOptimizer(ase_atoms, self.calculator)
-            #  dyn.run(fmax='tight', steps=self.maxiter)
-            dyn.run()
+            dyn.run(steps=self.maxiter)
         else:
             ase_atoms.set_calculator(self.calculator)
             #  self.dyn = LBFGS(ase_atoms)
             dyn = self._getOptMethod(ase_atoms)
-            dyn.run(fmax=self.fmax, steps=self.maxiter)
+            dyn.run("opt")
 
         #  file_csv = open("%s/optmized_energy.csv" %self.WORK_DIR, "w")
         #  print(ase_atoms.get_potential_energy(), ",eV", file=file_csv)
