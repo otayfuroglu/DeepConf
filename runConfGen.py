@@ -168,9 +168,10 @@ def runConfGen(file_name):
         out_file_path="%s/global_%s%s.sdf"%(WORK_DIR, prefix, file_base)
         # geometry optimizaton for ligand
         if  optimization_lig:
-            _, e = lig.geomOptimization()
+            ase_atoms, e = lig.geomOptimization()
             e_file = open("%s/global_%s%s_energy.txt"%(WORK_DIR, prefix, file_base) , "w")
             print(e, " eV", file=e_file)
+            write("%s/global_%s%s.xyz"%(WORK_DIR, prefix, file_base), ase_atoms)
             #  ase_atoms = lig.rwMol2AseAtoms()
 
     # write minimun energy conformer to sdf file
