@@ -731,7 +731,8 @@ class confGen:
 
         if self.optG16:
             dyn =  GaussianOptimizer(ase_atoms, self.calculator)
-            dyn.run(fmax='tight', steps=self.maxiter)
+            #  dyn.run(fmax='tight', steps=self.maxiter)
+            dyn.run()
         else:
             ase_atoms.set_calculator(self.calculator)
             #  self.dyn = LBFGS(ase_atoms)

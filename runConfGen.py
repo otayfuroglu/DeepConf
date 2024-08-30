@@ -148,7 +148,7 @@ def runConfGen(file_name):
     if pre_optimization_lig:
         print("Pre-Optimization process.. before generations")
         ase_atoms, _ = lig.geomOptimization()
-        write(f"pre_opt_{file_base}.xyz", ase_atoms)
+        #write(f"pre_opt_{file_base}.xyz", ase_atoms)
 
 
     if genconformer:
