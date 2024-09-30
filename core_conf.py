@@ -401,7 +401,6 @@ class confGen:
                     os.remove(f"{conf_dir}/{rm_file}")
 
         # for the energy filter
-        #  print(len(local_files_minE))
         if len(local_files_minE) > 1:
             print("Applied diff Energy filter (eV/Atom)")
             cluster_conf = self._getCluster_diffE(local_files_minE, diffE_thresh=opt_prune_diffE_thresh)
@@ -412,7 +411,7 @@ class confGen:
                             fl_name = fl_names[0] #  remove first file
                         print("Removed", fl_name)
                         #  os.remove(f"{conf_dir}/{fl_name}") #NOTE comment out
-                        local_files_minE.remove(fl_name)
+                        del local_files_minE[fl_name]
 
         # file which ha global minimum enery renamed 
         #  os.rename(f"{conf_dir}/pruned_{global_minE_file}", f"{conf_dir}/global_minE_{global_minE_file}")
