@@ -73,31 +73,31 @@ def setG16calculator(lig, file_base, label, WORK_DIR):
 
 
 def setGenConformers(lig, out_file_path, mmCalculator):
-    trial = lig.n_trial
-    while trial <= 3:
-        try:
-            lig.genGonformers(
-                file_path=out_file_path,
-                numConfs=num_conformers,
-                ETKDG=ETKDG,
-                maxAttempts=max_attempts,
-                pruneRmsThresh=prune_rms_thresh,
-                mmCalculator=mmCalculator,
-                optimization_conf=optimization_conf,
-                opt_prune_rms_thresh=opt_prune_rms_thresh,
-                opt_prune_diffE_thresh=opt_prune_diffE_thresh,
-                nfold=nfold,
-                npick=npick,)
-        except:
-            print(f"Trail {trial} failed, attempting new one... ")
-            lig.increaseTrilNum()
-            trial = lig.n_trial
-            setGenConformers(lig, out_file_path, mmCalculator)
-        finally:
-            return lig
-    else:
-        print(f"{trial -1} attempts failed, Skipping...")
-        return None
+    #  trial = lig.n_trial
+    #  while trial <= 3:
+        #  try:
+        lig.genGonformers(
+            file_path=out_file_path,
+            numConfs=num_conformers,
+            ETKDG=ETKDG,
+            maxAttempts=max_attempts,
+            pruneRmsThresh=prune_rms_thresh,
+            mmCalculator=mmCalculator,
+            optimization_conf=optimization_conf,
+            opt_prune_rms_thresh=opt_prune_rms_thresh,
+            opt_prune_diffE_thresh=opt_prune_diffE_thresh,
+            nfold=nfold,
+            npick=npick,)
+        #  except:
+        #      print(f"Trail {trial} failed, attempting new one... ")
+        #      lig.increaseTrilNum()
+        #      trial = lig.n_trial
+        #      setGenConformers(lig, out_file_path, mmCalculator)
+        #  finally:
+        #      return lig
+    #  else:
+    #      print(f"{trial -1} attempts failed, Skipping...")
+    #      return None
 
 
 #  @calcFuncRunTime
@@ -123,7 +123,7 @@ def runConfGen(file_name):
     if ignore_hydrogen:
         addH = True
         prefix += "addH_"
-    if optimization_lig or optimization_conf:
+    if optimization_lig or optimization_conf or pre_optimization_lig:
         prefix += "opt_"
 
     # initialize confGen
@@ -146,8 +146,13 @@ def runConfGen(file_name):
     lig.setOptParams(fmax=thr_fmax, maxiter=args.maxiter)
 
     if pre_optimization_lig:
-        print("Pre-Optimization process.. before generations")
-        ase_atoms, _ = lig.geomOptimization()
+        print("Pre-Optimization process.. before confromer generations")
+        #  ase_atoms= lig.geomOptimization()
+        e = lig.geomOptimization()
+        pre_e_file = open("%s/pre_%s%s_energy.txt"%(WORK_DIR, prefix, file_base) , "w")
+        print(e, " eV", file=pre_e_file)
+        #  ase_atoms, _ = lig.geomOptimization()
+        lig.writeRWMol2File("%s/pre_%s%s.sdf"%(WORK_DIR, prefix, file_base), Energy=e)
         #  write(f"pre_opt_{file_base}.xyz", ase_atoms)
 
 
@@ -158,32 +163,33 @@ def runConfGen(file_name):
             return None
 
         print("Conformer generation process is done")
-        if not optimization_conf and optimization_lig:
-            print("Optimization for minumum energy conformer")
-            _, e = lig.geomOptimization()
-            _, e_file = open("%s/global_%s%s_energy.txt"%(WORK_DIR, prefix, file_base) , "w")
-            #  lig.geomOptimization()
+        #  if not optimization_conf and optimization_lig:
+        #      print("Optimization for minumum energy conformer")
+        #      e = lig.geomOptimization()
+        #      e_file = open("%s/global_%s%s_energy.txt"%(WORK_DIR, prefix, file_base) , "w")
+        #      #  lig.geomOptimization()
 
     else:
         out_file_path="%s/global_%s%s.sdf"%(WORK_DIR, prefix, file_base)
         # geometry optimizaton for ligand
         if  optimization_lig:
-            ase_atoms, e = lig.geomOptimization()
+            e = lig.geomOptimization()
             e_file = open("%s/global_%s%s_energy.txt"%(WORK_DIR, prefix, file_base) , "w")
             print(e, " eV", file=e_file)
-            write("%s/global_%s%s.xyz"%(WORK_DIR, prefix, file_base), ase_atoms)
+            lig.writeRWMol2File("%s/global_%s%s.sdf"%(WORK_DIR, prefix, file_base), Energy=e)
+            #  write("%s/global_%s%s.xyz"%(WORK_DIR, prefix, file_base), ase_atoms)
             #  ase_atoms = lig.rwMol2AseAtoms()
 
     # write minimun energy conformer to sdf file
-    lig.writeRWMol2File(out_file_path)
+    #  lig.writeRWMol2File(out_file_path)
 
-    #  for the bug of reading sfd file which have charges in ase
-    try:
-        atoms = read(out_file_path)
-    except:
-        out_file_path="%s/%s%s.xyz"%(WORK_DIR, prefix, file_base)
-        lig.writeRWMol2File(out_file_path)
-        atoms = read(out_file_path)
+    #  #  for the bug of reading sfd file which have charges in ase
+    #  try:
+    #      atoms = read(out_file_path)
+    #  except:
+    #      out_file_path="%s/%s%s.xyz"%(WORK_DIR, prefix, file_base)
+    #      lig.writeRWMol2File(out_file_path)
+    #      atoms = read(out_file_path)
 
 
 if __name__ == "__main__":

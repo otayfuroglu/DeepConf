@@ -234,7 +234,7 @@ class confGen:
         if os.path.exists(file_path):
             os.remove(file_path)
 
-    def writeRWMol2File(self, file_path):
+    def writeRWMol2File(self, file_path, **kwargs):
 
         # add missing H
         #  self.addHwithRD()
@@ -247,7 +247,9 @@ class confGen:
             rdkit.Chem.rdmolfiles.MolToPDBFile(self.rw_mol, file_path)
         elif file_format == "sdf":
             with Chem.rdmolfiles.SDWriter(file_path) as writer:
-                writer.write(self.rw_mol)
+                for key, value in kwargs.items():
+                    self.rw_mol.SetProp(key, str(value))
+                    writer.write(self.rw_mol)
 
         else:
             print("Unknown file format")
@@ -389,8 +391,9 @@ class confGen:
                         minE_file = fl_name
 
             fl_names.remove(minE_file)
-            os.rename(f"{conf_dir}/{minE_file}", f"{conf_dir}/pruned_{minE_file}")
-            local_files_minE[f"pruned_{minE_file}"] = minE
+            #  os.rename(f"{conf_dir}/{minE_file}", f"{conf_dir}/pruned_{minE_file}") # NOTE commentout
+            #  local_files_minE[f"pruned_{minE_file}"] = minE
+            local_files_minE[minE_file] = minE
 
             if len (fl_names) != 0:
                 for rm_file in fl_names:
@@ -398,7 +401,7 @@ class confGen:
                     os.remove(f"{conf_dir}/{rm_file}")
 
         # for the energy filter
-        print(len(local_files_minE))
+        #  print(len(local_files_minE))
         if len(local_files_minE) > 1:
             print("Applied diff Energy filter (eV/Atom)")
             cluster_conf = self._getCluster_diffE(local_files_minE, diffE_thresh=opt_prune_diffE_thresh)
@@ -408,11 +411,23 @@ class confGen:
                         if fl_name == f"pruned_{global_minE_file}": # if any candidate removed file is global min 
                             fl_name = fl_names[0] #  remove first file
                         print("Removed", fl_name)
-                        os.remove(f"{conf_dir}/{fl_name}")
+                        #  os.remove(f"{conf_dir}/{fl_name}") #NOTE comment out
+                        local_files_minE.remove(fl_name)
 
-        # file which has global minimum enery renamed 
-        os.rename(f"{conf_dir}/pruned_{global_minE_file}", f"{conf_dir}/global_minE_{global_minE_file}")
+        # file which ha global minimum enery renamed 
+        #  os.rename(f"{conf_dir}/pruned_{global_minE_file}", f"{conf_dir}/global_minE_{global_minE_file}")
         # NOTE
+
+        local_files_minE_sorted = dict(sorted(local_files_minE.items(), key=lambda item: item[1]))
+
+        with Chem.SDWriter(f"{conf_dir}/pruned_min_e_structures.sdf") as w:
+            for fl_name, e in local_files_minE_sorted.items():
+                mol = next(Chem.SDMolSupplier(f"{conf_dir}/{fl_name}"))
+                mol.SetProp("Energy", str(e))
+                w.write(mol)
+                os.remove(f"{conf_dir}/{fl_name}")
+        quit()
+
 
     def genGonformers(self, file_path,
                          numConfs=100,
@@ -502,7 +517,7 @@ class confGen:
                 if mmCalculator:
                     e = self._calcEnergyWithMM(mol, conformerId, 100)["energy_abs"]
                 else:
-                    e = self._calcSPEnergy(mol, conformerId)
+                    e, _ = self._calcSPEnergy(mol, conformerId)
 
                 if i == 0:
                     minE = e
@@ -548,57 +563,67 @@ class confGen:
         # close to csv file
         file_csv.close()
 
-        MIN_E_CONF_DIR = self.WORK_DIR + "/opt_picked_confs"
-        if not os.path.exists(MIN_E_CONF_DIR):
-            os.mkdir(MIN_E_CONF_DIR)
-
+        prefix = ""
+        PICKED_CONF_DIR = self.WORK_DIR
         if optimization_conf:
-            opt_file_csv = open("%s/opt_confs_energies.csv" %MIN_E_CONF_DIR, "w")
-            print("FileName, Energy(eV), EnergyPerAtom(eV)", file=opt_file_csv)
+            prefix = "opt_"
 
-            #  for i, conformerId  in enumerate(minEConformerIDs):
-            for i, conformerId  in enumerate(all_picked_confs):
+        PICKED_CONF_DIR = self.WORK_DIR + f"/{prefix}picked_confs"
+        if not os.path.exists(PICKED_CONF_DIR):
+            os.mkdir(PICKED_CONF_DIR)
+        picked_file_csv = open(f"{self.WORK_DIR}/{prefix}picked_confs_energies.csv", "w")
+        print("FileName, Energy(eV), EnergyPerAtom(eV)", file=picked_file_csv)
+
+        #  else:
+        #      picked_file_csv = open(f"{PICKED_CONF_DIR}/{prefix}picked_confs_energies.csv", "w")
+        #      print("FileName, Energy(eV), EnergyPerAtom(eV)", file=picked_file_csv)
+
+        #  for i, conformerId  in enumerate(minEConformerIDs):
+        for i, conformerId  in enumerate(all_picked_confs):
+            if optimization_conf:
                 e, ase_atoms = self._geomOptimizationConf(mol, conformerId)
-                prefix = "opt_"
-                conf_file_path = "%s/%sconf_%d.sdf"%(MIN_E_CONF_DIR, prefix, conformerId)
+            else:
+                e, ase_atoms = self._calcSPEnergy(mol, conformerId)
+            conf_file_path = "%s/%sconf_%d.sdf"%(PICKED_CONF_DIR, prefix, conformerId)
 
-                # save optimized structure  with ase
-                #  write(conf_file_path, ase_atoms)
+            # save optimized structure  with ase
+            #  write(conf_file_path, ase_atoms)
 
-                #  save optimized structure  with rdkit as sdf
-                with Chem.rdmolfiles.SDWriter(conf_file_path) as writer:
-                    writer.write(self.aseAtoms2rwMol(ase_atoms))
+            #  save optimized structure  with rdkit as sdf
+            with Chem.rdmolfiles.SDWriter(conf_file_path) as writer:
+                writer.write(self.aseAtoms2rwMol(ase_atoms))
 
-                print("%sconf_%d.sdf, %s, %s"%(prefix,
-                                               conformerId,
-                                               e,
-                                               e/ase_atoms.get_number_of_atoms()),
-                      file=opt_file_csv)
-            opt_file_csv.close()
+            print("%sconf_%d.sdf, %s, %s"%(prefix,
+                                           conformerId,
+                                           e,
+                                           e/ase_atoms.get_number_of_atoms()),
+                  file=picked_file_csv)
+        picked_file_csv.close()
 
-            # cluster and prune opitimzed confs by RMSD
-            confs_energies = pd.read_csv(f"{MIN_E_CONF_DIR}/opt_confs_energies.csv")
+        # cluster and prune opitimzed confs by RMSD
+        if optimization_conf:
+            confs_energies = pd.read_csv(f"{self.WORK_DIR}/{prefix}picked_confs_energies.csv")
             #  print(confs_energies)
-            cluster_conf = self._getClusterRMSDFromFiles(MIN_E_CONF_DIR, rmsd_thresh=opt_prune_rms_thresh)
+            cluster_conf = self._getClusterRMSDFromFiles(PICKED_CONF_DIR, rmsd_thresh=opt_prune_rms_thresh)
             if cluster_conf != 0:
-                self._pruneOptConfs(cluster_conf, confs_energies, MIN_E_CONF_DIR, opt_prune_diffE_thresh)
+                self._pruneOptConfs(cluster_conf, confs_energies, PICKED_CONF_DIR, opt_prune_diffE_thresh)
 
-                #  #create ase atoms
-                #  ase_atoms = self._rwConformer2AseAtoms(mol, conformerId)
-                #  if mmCalculator:
-                #      e = self._calcEnergyWithMM(mol, conformerId, 100)["energy_abs"]
-                #  else:
-                #      e = self._calcSPEnergy(mol, conformerId)
+            #  #create ase atoms
+            #  ase_atoms = self._rwConformer2AseAtoms(mol, conformerId)
+            #  if mmCalculator:
+            #      e = self._calcEnergyWithMM(mol, conformerId, 100)["energy_abs"]
+            #  else:
+            #      e = self._calcSPEnergy(mol, conformerId)
 
-                #  if i == 0:
-                #      minE = e
-                #      minEConformerID = conformerId
-                #      minE_ase_atoms = ase_atoms
-                #  else:
-                #      if minE > e:
-                #          minE = e
-                #          minEConformerID = conformerId
-                #          minE_ase_atoms = ase_atoms
+            #  if i == 0:
+            #      minE = e
+            #      minEConformerID = conformerId
+            #      minE_ase_atoms = ase_atoms
+            #  else:
+            #      if minE > e:
+            #          minE = e
+            #          minEConformerID = conformerId
+            #          minE_ase_atoms = ase_atoms
 
 
     def _calcEnergyWithMM(self, mol, conformerId, minimizeIts):
@@ -648,7 +673,7 @@ class confGen:
         #  write("test_ase_atoms.xyz", ase_atoms)
         ase_atoms.set_calculator(self.calculator)
 
-        return ase_atoms.get_potential_energy()
+        return ase_atoms.get_potential_energy(), ase_atoms 
 
     def calcSPEnergy(self):
 
@@ -741,15 +766,16 @@ class confGen:
         #  file_csv = open("%s/optmized_energy.csv" %self.WORK_DIR, "w")
         #  print(ase_atoms.get_potential_energy(), ",eV", file=file_csv)
 
-        try:
-            self.rw_mol = self.aseAtoms2rwMol(ase_atoms)
-        except:
-            prin("Worning: Ase atoms can not transform to rdkit rw mol")
-        finally:
-            return ase_atoms, ase_atoms.get_potential_energy()
+        #  try:
+        self.rw_mol = self.aseAtoms2rwMol(ase_atoms)
+        #  except:
+        #      prin("Worning: Ase atoms can not transform to rdkit rw mol")
+        #  finally:
+        #      return ase_atoms, ase_atoms.get_potential_energy()
 
 
         #  return ase_atoms.get_potential_energy(), ase_atoms
+        return ase_atoms.get_potential_energy()
 
     def _rwConformer2AseAtoms(self, mol, conformerId):
 
@@ -791,7 +817,12 @@ class confGen:
         rd_mol = Chem.rdmolfiles.MolFromPDBFile("tmp.pdb", sanitize=True, removeHs=False)
         self._rmFileExist("tmp.pdb")
 
-        return AllChem.AssignBondOrdersFromTemplate(self.rw_mol, rd_mol)
+        try:
+            return AllChem.AssignBondOrdersFromTemplate(self.rw_mol, rd_mol)
+        except:
+            print("Warnings: Can not assign bond borders!")
+            return rd_mol
+
 
     def writeAseAtoms(self, file_path):
         ase_atoms = self.rwMol2AseAtoms()
