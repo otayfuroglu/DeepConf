@@ -410,7 +410,7 @@ class confGen:
                         if fl_name == f"pruned_{global_minE_file}": # if any candidate removed file is global min 
                             fl_name = fl_names[0] #  remove first file
                         print("Removed", fl_name)
-                        #  os.remove(f"{conf_dir}/{fl_name}") #NOTE comment out
+                        os.remove(f"{conf_dir}/{fl_name}")
                         del local_files_minE[fl_name]
 
         # file which ha global minimum enery renamed 
@@ -423,6 +423,7 @@ class confGen:
             for fl_name, e in local_files_minE_sorted.items():
                 mol = next(Chem.SDMolSupplier(f"{conf_dir}/{fl_name}"))
                 mol.SetProp("Energy", str(e))
+                mol.SetProp("_Name", fl_name)
                 w.write(mol)
                 os.remove(f"{conf_dir}/{fl_name}")
         quit()
