@@ -571,7 +571,8 @@ class confGen:
         PICKED_CONF_DIR = self.WORK_DIR + f"/{prefix}picked_confs"
         if not os.path.exists(PICKED_CONF_DIR):
             os.mkdir(PICKED_CONF_DIR)
-        picked_file_csv = open(f"{self.WORK_DIR}/{prefix}picked_confs_energies.csv", "w")
+        #  picked_file_csv = open(f"{self.WORK_DIR}/{prefix}picked_confs_energies.csv", "w")
+        picked_file_csv = open(f"{PICKED_CONF_DIR}/{prefix}picked_confs_energies.csv", "w")
         print("FileName, Energy(eV), EnergyPerAtom(eV)", file=picked_file_csv)
 
         #  else:
@@ -602,7 +603,7 @@ class confGen:
 
         # cluster and prune opitimzed confs by RMSD
         if optimization_conf:
-            confs_energies = pd.read_csv(f"{self.WORK_DIR}/{prefix}picked_confs_energies.csv")
+            confs_energies = pd.read_csv(f"{PICKED_CONF_DIR}/{prefix}picked_confs_energies.csv")
             #  print(confs_energies)
             cluster_conf = self._getClusterRMSDFromFiles(PICKED_CONF_DIR, rmsd_thresh=opt_prune_rms_thresh)
             if cluster_conf != 0:
