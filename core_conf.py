@@ -427,8 +427,6 @@ class confGen:
                 mol.SetProp("_Name", fl_name)
                 w.write(mol)
                 os.remove(f"{conf_dir}/{fl_name}")
-        quit()
-
 
     def genGonformers(self, file_path,
                          numConfs=100,
