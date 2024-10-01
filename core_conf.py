@@ -121,8 +121,10 @@ class confGen:
         # trial number
         self.n_trial = 1
 
+    def getFileBase(self):
+        return self.mol_path.split("/")[-1].split(".")[0]
 
-    def increaseTrilNum(self):
+    def increaseTrialNum(self):
         self.n_trial += 1
 
     def _getFileFormat(self, file_path=None):
@@ -420,7 +422,7 @@ class confGen:
 
         local_files_minE_sorted = dict(sorted(local_files_minE.items(), key=lambda item: item[1]))
 
-        with Chem.SDWriter(f"{conf_dir}/pruned_min_e_structures.sdf") as w:
+        with Chem.SDWriter(f"{conf_dir}/{self.getFileBase()}_output.sdf") as w:
             for fl_name, e in local_files_minE_sorted.items():
                 mol = next(Chem.SDMolSupplier(f"{conf_dir}/{fl_name}"))
                 mol.SetProp("Energy", str(e))
@@ -591,7 +593,10 @@ class confGen:
 
             #  save optimized structure  with rdkit as sdf
             with Chem.rdmolfiles.SDWriter(conf_file_path) as writer:
-                writer.write(self.aseAtoms2rwMol(ase_atoms))
+                rwmol = self.aseAtoms2rwMol(ase_atoms)
+                rwmol.SetProp("Energy", str(e))
+                rwmol.SetProp("_Name", f"{prefix}conf_{conformerId}")
+                writer.write(rwmol)
 
             print("%sconf_%d.sdf, %s, %s"%(prefix,
                                            conformerId,
@@ -607,6 +612,9 @@ class confGen:
             cluster_conf = self._getClusterRMSDFromFiles(PICKED_CONF_DIR, rmsd_thresh=opt_prune_rms_thresh)
             if cluster_conf != 0:
                 self._pruneOptConfs(cluster_conf, confs_energies, PICKED_CONF_DIR, opt_prune_diffE_thresh)
+            else:
+                os.rename(f"{PICKED_CONF_DIR}/{confs_energies['FileName'][0]}", f"{PICKED_CONF_DIR}/{prefix}output.sdf")
+
 
             #  #create ase atoms
             #  ase_atoms = self._rwConformer2AseAtoms(mol, conformerId)
