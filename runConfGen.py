@@ -73,31 +73,31 @@ def setG16calculator(lig, file_base, label, WORK_DIR):
 
 
 def setGenConformers(lig, out_file_path, mmCalculator):
-    #  trial = lig.n_trial
-    #  while trial <= 3:
-        #  try:
-        lig.genGonformers(
-            file_path=out_file_path,
-            numConfs=num_conformers,
-            ETKDG=ETKDG,
-            maxAttempts=max_attempts,
-            pruneRmsThresh=prune_rms_thresh,
-            mmCalculator=mmCalculator,
-            optimization_conf=optimization_conf,
-            opt_prune_rms_thresh=opt_prune_rms_thresh,
-            opt_prune_diffE_thresh=opt_prune_diffE_thresh,
-            nfold=nfold,
-            npick=npick,)
-        #  except:
-        #      print(f"Trail {trial} failed, attempting new one... ")
-        #      lig.increaseTrilNum()
-        #      trial = lig.n_trial
-        #      setGenConformers(lig, out_file_path, mmCalculator)
-        #  finally:
-        #      return lig
-    #  else:
-    #      print(f"{trial -1} attempts failed, Skipping...")
-    #      return None
+    trial = lig.n_trial
+    while trial <= 3:
+        try:
+            lig.genGonformers(
+                file_path=out_file_path,
+                numConfs=num_conformers,
+                ETKDG=ETKDG,
+                maxAttempts=max_attempts,
+                pruneRmsThresh=prune_rms_thresh,
+                mmCalculator=mmCalculator,
+                optimization_conf=optimization_conf,
+                opt_prune_rms_thresh=opt_prune_rms_thresh,
+                opt_prune_diffE_thresh=opt_prune_diffE_thresh,
+                nfold=nfold,
+                npick=npick,)
+        except:
+            print(f"Trail {trial} failed, attempting new one... ")
+            lig.increaseTrilNum()
+            trial = lig.n_trial
+            setGenConformers(lig, out_file_path, mmCalculator)
+        finally:
+            return lig
+    else:
+        print(f"{trial -1} attempts failed, Skipping...")
+        return None
 
 
 #  @calcFuncRunTime
