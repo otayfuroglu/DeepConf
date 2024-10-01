@@ -161,7 +161,7 @@ class confGen:
         #  obConversion.ReadFile(ob_mol, self.mol_path)
 
         pb_mol = next(pybel.readfile(self._getFileFormat(), self.mol_path))
-        tmp_file_name = "tmp_ob_file.sdf"
+        tmp_file_name = f"{self.WORK_DIR}/tmp_ob_file.sdf"
 
         #add hydrogen with openbabel
         if self.addH:
@@ -215,6 +215,7 @@ class confGen:
             #          print("Aromatic N atom idex: ",i+1)
             #          self.rw_mol.GetAtomWithIdx(i+1).SetNumExplicitHs(1)
         # remove temp
+        # NOTE: make commentin  when refinegin code
         #  self._rmFileExist(tmp_file_name)
 
         # NOTE
