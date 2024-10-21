@@ -375,7 +375,7 @@ class confGen:
         for fl_names in cluster_conf.values():
             for j, fl_name in enumerate(fl_names):
                 #  e = float(confs_energies.loc[confs_energies["FileName"] == fl_name, " Energy(eV)"].item())
-                e = float(confs_energies.loc[confs_energies["FileName"] == fl_name, " EnergyPerAtom(eV)"].item())
+                e = float(confs_energies.loc[confs_energies["FileName"] == fl_name, "Energy(eV)"].item())
                 if i == 0:
                     global_minE = e
                     global_minE_file = fl_name
@@ -482,7 +482,7 @@ class confGen:
 
         # file for saving energies
         file_csv = open("%s/all_confs_sp_energies.csv" %self.WORK_DIR, "w")
-        print("FileName, Energy(eV)", file=file_csv)
+        print("FileName,Energy(eV)", file=file_csv)
 
         print("Number of generated conformation: %d" %len(conformerIds))
 
@@ -529,7 +529,7 @@ class confGen:
                         minE = e
                         minEConformerID = conformerId
                         minE_ase_atoms = ase_atoms
-                print("%sconf_%d.sdf, %s"%(prefix, conformerId, e), file=file_csv)
+                print("%sconf_%d.sdf,%s"%(prefix, conformerId, e), file=file_csv)
 
             minEConformerIDs.append(minEConformerID)
 
@@ -574,11 +574,11 @@ class confGen:
             os.mkdir(PICKED_CONF_DIR)
         #  picked_file_csv = open(f"{self.WORK_DIR}/{prefix}picked_confs_energies.csv", "w")
         picked_file_csv = open(f"{PICKED_CONF_DIR}/{prefix}picked_confs_energies.csv", "w")
-        print("FileName, Energy(eV), EnergyPerAtom(eV)", file=picked_file_csv)
+        print("FileName,Energy(eV),EnergyPerAtom(eV)", file=picked_file_csv)
 
         #  else:
         #      picked_file_csv = open(f"{PICKED_CONF_DIR}/{prefix}picked_confs_energies.csv", "w")
-        #      print("FileName, Energy(eV), EnergyPerAtom(eV)", file=picked_file_csv)
+        #      print("FileName, Energy(eV),EnergyPerAtom(eV)", file=picked_file_csv)
 
         #  for i, conformerId  in enumerate(minEConformerIDs):
         for i, conformerId  in enumerate(all_picked_confs):
@@ -598,10 +598,10 @@ class confGen:
                 rwmol.SetProp("_Name", f"{prefix}conf_{conformerId}")
                 writer.write(rwmol)
 
-            print("%sconf_%d.sdf, %s, %s"%(prefix,
-                                           conformerId,
-                                           e,
-                                           e/ase_atoms.get_number_of_atoms()),
+            print("%sconf_%d.sdf,%s,%s"%(prefix,
+                                         conformerId,
+                                         e,
+                                         e/ase_atoms.get_number_of_atoms()),
                   file=picked_file_csv)
         picked_file_csv.close()
 
