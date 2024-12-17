@@ -61,14 +61,14 @@ def getBoolStr(string):
 def setG16calculator(lig, file_base, label, WORK_DIR):
     lig.setG16Calculator(
             label="%s/g16_%s/%s"%(WORK_DIR, label, file_base),
-            #  chk="%s.chk"%file_base,
             chk="",
             nprocs=nprocs,
-            xc="HF",
-            basis="3-21g",
-            scf="maxcycle=100",
+            xc="WB97X",
+            basis="6-31G*",
+            scf="XQC, maxconventionalcycles=100",
             extra="nosymm",
-    )
+
+            )
     return lig
 
 
@@ -147,28 +147,17 @@ def runConfGen(file_name):
 
     if pre_optimization_lig:
         print("Pre-Optimization process.. before confromer generations")
-        #  ase_atoms= lig.geomOptimization()
         e = lig.geomOptimization()
         pre_e_file = open("%s/pre_%s%s_energy.txt"%(WORK_DIR, prefix, file_base) , "w")
         print(e, " eV", file=pre_e_file)
-        #  ase_atoms, _ = lig.geomOptimization()
         lig.writeRWMol2File("%s/pre_%s%s.sdf"%(WORK_DIR, prefix, file_base), Energy=e)
-        #  write(f"pre_opt_{file_base}.xyz", ase_atoms)
-
 
     if genconformer:
         out_file_path="%s/%sminE_conformer.sdf"%(WORK_DIR, prefix)
         lig = setGenConformers(lig, out_file_path, mmCalculator)
         if lig is None:
             return None
-
         print("Conformer generation process is done")
-        #  if not optimization_conf and optimization_lig:
-        #      print("Optimization for minumum energy conformer")
-        #      e = lig.geomOptimization()
-        #      e_file = open("%s/global_%s%s_energy.txt"%(WORK_DIR, prefix, file_base) , "w")
-        #      #  lig.geomOptimization()
-
     else:
         out_file_path="%s/global_%s%s.sdf"%(WORK_DIR, prefix, file_base)
         # geometry optimizaton for ligand
@@ -177,19 +166,6 @@ def runConfGen(file_name):
             e_file = open("%s/global_%s%s_energy.txt"%(WORK_DIR, prefix, file_base) , "w")
             print(e, " eV", file=e_file)
             lig.writeRWMol2File("%s/global_%s%s.sdf"%(WORK_DIR, prefix, file_base), Energy=e)
-            #  write("%s/global_%s%s.xyz"%(WORK_DIR, prefix, file_base), ase_atoms)
-            #  ase_atoms = lig.rwMol2AseAtoms()
-
-    # write minimun energy conformer to sdf file
-    #  lig.writeRWMol2File(out_file_path)
-
-    #  #  for the bug of reading sfd file which have charges in ase
-    #  try:
-    #      atoms = read(out_file_path)
-    #  except:
-    #      out_file_path="%s/%s%s.xyz"%(WORK_DIR, prefix, file_base)
-    #      lig.writeRWMol2File(out_file_path)
-    #      atoms = read(out_file_path)
 
 
 if __name__ == "__main__":
