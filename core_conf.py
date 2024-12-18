@@ -55,6 +55,7 @@ def calcRMSDsymm(pair_idx, mol_list):
                                 mol_list[idx2])
                    )
 
+
 #  @calcFuncRunTime
 def getDistMatrix(mol_list, conformerIds=None):
 
@@ -134,13 +135,9 @@ class confGen:
         return self.mol_path.split(".")[-1]
 
     def _loadRWMol(self):
-        #  if self._getFileFormat() == "mol2" and not self.addH:
-        #      self._loadMolWithRW(self.mol_path)
-        #  else:
         self._loadMolWithOB()
 
     def _loadMolWithRW(self, mol_path, sanitize=True):
-        #  rd_mol = Chem.rdmolfiles.MolFromMol2File(mol_path, sanitize=sanitize, removeHs=False)
         rd_mol = next(Chem.SDMolSupplier(mol_path, sanitize=sanitize, removeHs=False))
         if sanitize is False:
             rd_mol.UpdatePropertyCache(strict=False)
@@ -156,11 +153,6 @@ class confGen:
         return rd_mol
 
     def _loadMolWithOB(self):
-
-        #  obConversion = openbabel.OBConversion()
-        #  obConversion.SetInAndOutFormats(self._getFileFormat(), "mol2")
-        #  ob_mol = openbabel.OBMol()
-        #  obConversion.ReadFile(ob_mol, self.mol_path)
 
         pb_mol = next(pybel.readfile(self._getFileFormat(), self.mol_path))
         tmp_file_name = f"{self.WORK_DIR}/tmp_ob_file.sdf"
@@ -189,19 +181,11 @@ class confGen:
                 self._rmFileExist(tmp_file_name)
                 self._rmFileExist(corr_tmp_file_name)
 
-            #  pb_mol.removeh()
             pb_mol.addh()
             pb_mol.make3D()
 
-            #  ob_mol.DeleteHydrogens()
-            #  ob_mol.AddHydrogens(True, # Whether to add hydrogens only to polar atoms (i.e., not to C atoms)
-            #                      True,  # correctForPH 	Whether to call CorrectForPH() first
-            #                      7.4,  # The pH to use for CorrectForPH() modification
-            #                     )
-
         #  # openbabel file to rdkit mol2 file
         pb_mol.write("sdf", tmp_file_name, overwrite=True)
-        #  obConversion.WriteFile(ob_mol, tmp_file_name)
 
         # laod as RW file
         try:
@@ -209,19 +193,6 @@ class confGen:
         except:
             self._loadMolWithRW(tmp_file_name, sanitize=False)
             self.rw_mol = self._rdKekuleizeError(self.rw_mol)
-
-            # correction  kekuleize error (especially N in aromatic ring)
-            #  print("\nWarning!: There is kekulize error, ingnored sanitize and kekulized for N atom which is in aromatic ring\n")
-            #  for i, atom in enumerate(self.rw_mol.GetAtoms()):
-            #      if atom.GetSymbol() == "N" and atom.GetIsAromatic():
-            #          print("Aromatic N atom idex: ",i+1)
-            #          self.rw_mol.GetAtomWithIdx(i+1).SetNumExplicitHs(1)
-        # remove temp
-        # NOTE: make commentin  when refinegin code
-        #  self._rmFileExist(tmp_file_name)
-
-        # NOTE
-        #  ase_atoms = self.obMol2AseAtoms(ob_mol)
 
         # optmization for just added H
         if self.addH:
@@ -280,30 +251,6 @@ class confGen:
         else:
             return int(scaled * nfold ** n_torsions)
 
-    #  def _getConfDistMatrix(self, mol, conformerIds):
-
-    #      #  conf_list = []
-    #      #  for conformerId in conformerIds:
-    #      #      print(conformerId)
-    #      #      conf = mol.GetConformer(conformerId)
-    #      #      #  positions = conf.GetPositions()
-    #      #      #  print(positions)
-    #      #      conf.SetProp("_Name", str(conformerId))
-    #      #      conf_list.append(conf)
-
-    #      #  print(conf_list)
-    #      n_mol=len(conformerIds)
-    #      if n_mol <= 1:
-    #          print("Clustering do not applied.. There is just one conformer")
-    #          return 0
-    #      conf_dist_matrix = np.empty(shape=(n_mol, n_mol))
-    #      for conf1_id in conformerIds:
-    #          for conf2_id in conformerIds:
-    #              conf_dist_matrix[conf1_id, conf2_id] = AllChem.GetConformerRMS(mol, conf1_id, conf2_id, prealigned=False)
-
-    #      return conf_dist_matrix
-
-
     #  @calcFuncRunTime
     def _getClusterKmeansFromConfIds(self, conformerIds, dist_matrix, n_group):
 
@@ -319,7 +266,7 @@ class confGen:
     #  @calcFuncRunTime
     def _getClusterRMSDFromFiles(self, conf_dir, rmsd_thresh):
 
-        mol_dict = {next(Chem.SDMolSupplier(f"{conf_dir}/{fl_name}")):
+        mol_dict = {next(Chem.SDMolSupplier(f"{conf_dir}/{fl_name}", removeHs=False)):
                       fl_name for fl_name in os.listdir(conf_dir)
                       if fl_name.endswith(".sdf")}
         mol_list = []
@@ -394,8 +341,6 @@ class confGen:
                         minE_file = fl_name
 
             fl_names.remove(minE_file)
-            #  os.rename(f"{conf_dir}/{minE_file}", f"{conf_dir}/pruned_{minE_file}") # NOTE commentout
-            #  local_files_minE[f"pruned_{minE_file}"] = minE
             local_files_minE[minE_file] = minE
 
             if len (fl_names) != 0:
@@ -416,15 +361,11 @@ class confGen:
                         os.remove(f"{conf_dir}/{fl_name}")
                         del local_files_minE[fl_name]
 
-        # file which ha global minimum enery renamed 
-        #  os.rename(f"{conf_dir}/pruned_{global_minE_file}", f"{conf_dir}/global_minE_{global_minE_file}")
-        # NOTE
-
         local_files_minE_sorted = dict(sorted(local_files_minE.items(), key=lambda item: item[1]))
 
         with Chem.SDWriter(f"{conf_dir}/{self.getFileBase()}_output.sdf") as w:
             for fl_name, e in local_files_minE_sorted.items():
-                mol = next(Chem.SDMolSupplier(f"{conf_dir}/{fl_name}"))
+                mol = next(Chem.SDMolSupplier(f"{conf_dir}/{fl_name}", removeHs=False))
                 mol.SetProp("Energy", str(e))
                 mol.SetProp("_Name", fl_name)
                 w.write(mol)
@@ -457,11 +398,6 @@ class confGen:
             print(f"Maximum number of conformers setting to {numConfs}")
 
         if ETKDG:
-            #  conformerIds = list(rdkit.Chem.AllChem.EmbedMultipleConfs(
-            #      mol,
-            #      numConfs=numConfs,
-            #      numThreads=NPROCS_ALL,
-            #  ))
             ps = rdkit.Chem.rdDistGeom.ETKDGv3()
             conformerIds = list(rdkit.Chem.rdDistGeom.EmbedMultipleConfs(
                 mol,
@@ -543,22 +479,6 @@ class confGen:
             picked_confs = [minEConformerID] + rndConformerIDs
             all_picked_confs += picked_confs
 
-
-            #  print(minE, minEGonformerID)
-            #  if numConfs > 1:
-            #  if not optimization_conf:
-            #      _, ase_atoms = self._geomOptimizationConf(mol, minEGonformerID)
-            #  else:
-            #      ase_atoms = self._rwConformer2AseAtoms(mol, minEGonformerID)
-
-            # compeare initial struct and minE conf. energies
-            #  if self.calcSPEnergy() >  minE:
-            #      # assign minE conformer to self rw mol
-            #      self.rw_mol = self.aseAtoms2rwMol(minE_ase_atoms)
-            #      print("Selected minimun energy conformer")
-            #  else:
-            #      print("!!! INITIAL structure as is minimun energy conformer !!!")
-
         # test
         assert len(minEConformerIDs) == len(cluster_conf_id.keys())
         # close to csv file
@@ -572,24 +492,15 @@ class confGen:
         PICKED_CONF_DIR = self.WORK_DIR + f"/{prefix}picked_confs"
         if not os.path.exists(PICKED_CONF_DIR):
             os.mkdir(PICKED_CONF_DIR)
-        #  picked_file_csv = open(f"{self.WORK_DIR}/{prefix}picked_confs_energies.csv", "w")
         picked_file_csv = open(f"{PICKED_CONF_DIR}/{prefix}picked_confs_energies.csv", "w")
         print("FileName,Energy(eV),EnergyPerAtom(eV)", file=picked_file_csv)
 
-        #  else:
-        #      picked_file_csv = open(f"{PICKED_CONF_DIR}/{prefix}picked_confs_energies.csv", "w")
-        #      print("FileName, Energy(eV),EnergyPerAtom(eV)", file=picked_file_csv)
-
-        #  for i, conformerId  in enumerate(minEConformerIDs):
         for i, conformerId  in enumerate(all_picked_confs):
             if optimization_conf:
                 e, ase_atoms = self._geomOptimizationConf(mol, conformerId)
             else:
                 e, ase_atoms = self._calcSPEnergy(mol, conformerId)
             conf_file_path = "%s/%sconf_%d.sdf"%(PICKED_CONF_DIR, prefix, conformerId)
-
-            # save optimized structure  with ase
-            #  write(conf_file_path, ase_atoms)
 
             #  save optimized structure  with rdkit as sdf
             with Chem.rdmolfiles.SDWriter(conf_file_path) as writer:
@@ -614,25 +525,6 @@ class confGen:
                 self._pruneOptConfs(cluster_conf, confs_energies, PICKED_CONF_DIR, opt_prune_diffE_thresh)
             else:
                 os.rename(f"{PICKED_CONF_DIR}/{confs_energies['FileName'][0]}", f"{PICKED_CONF_DIR}/{prefix}output.sdf")
-
-
-            #  #create ase atoms
-            #  ase_atoms = self._rwConformer2AseAtoms(mol, conformerId)
-            #  if mmCalculator:
-            #      e = self._calcEnergyWithMM(mol, conformerId, 100)["energy_abs"]
-            #  else:
-            #      e = self._calcSPEnergy(mol, conformerId)
-
-            #  if i == 0:
-            #      minE = e
-            #      minEConformerID = conformerId
-            #      minE_ase_atoms = ase_atoms
-            #  else:
-            #      if minE > e:
-            #          minE = e
-            #          minEConformerID = conformerId
-            #          minE_ase_atoms = ase_atoms
-
 
     def _calcEnergyWithMM(self, mol, conformerId, minimizeIts):
         ff = rdkit.Chem.AllChem.MMFFGetMoleculeForceField(
@@ -715,6 +607,12 @@ class confGen:
         elif self.opt_method=="berny":
             from ase.optimize import Berny
             return Berny(ase_atoms)
+        elif self.opt_method=="cg":
+            from ase.optimize.sciopz import SciPyFminCG
+            return SciPyFminCG(ase_atoms)
+        elif self.opt_method=="newtonraphson":
+            from ase_optmizer_newton_raphson import NewtonRaphson
+            return NewtonRaphson(ase_atoms)
 
     def _geomOptimizationConf(self, mol, conformerId):
         from ase.calculators.gaussian import GaussianOptimizer, Gaussian
@@ -739,10 +637,6 @@ class confGen:
             ase_atoms.set_calculator(self.calculator)
             dyn = self._getOptMethod(ase_atoms)
             dyn.run(fmax=self.fmax, steps=self.maxiter)
-
-        #  ase_atoms.set_calculator(self.calculator)
-        #  dyn = LBFGS(ase_atoms)
-        #  dyn.run(fmax=self.fmax,steps=self.maxiter)
 
         return ase_atoms.get_potential_energy(), ase_atoms
 
@@ -771,18 +665,7 @@ class confGen:
             dyn = self._getOptMethod(ase_atoms)
             dyn.run(fmax=self.fmax, steps=self.maxiter)
 
-        #  file_csv = open("%s/optmized_energy.csv" %self.WORK_DIR, "w")
-        #  print(ase_atoms.get_potential_energy(), ",eV", file=file_csv)
-
-        #  try:
         self.rw_mol = self.aseAtoms2rwMol(ase_atoms)
-        #  except:
-        #      prin("Worning: Ase atoms can not transform to rdkit rw mol")
-        #  finally:
-        #      return ase_atoms, ase_atoms.get_potential_energy()
-
-
-        #  return ase_atoms.get_potential_energy(), ase_atoms
         return ase_atoms.get_potential_energy()
 
     def _rwConformer2AseAtoms(self, mol, conformerId):
@@ -800,7 +683,6 @@ class confGen:
 
         conf = self.rw_mol.GetConformer()
         positions = [conf.GetAtomPosition(i) for i in range(len(atom_species))]
-        #  positions = self.rw_mol.GetConformers()[0].GetPositions()
 
         return Atoms(atom_species, positions)
 
@@ -818,9 +700,7 @@ class confGen:
 
     def aseAtoms2rwMol(self, ase_atoms):
 
-        #  from aseAtoms2rdMol import fromASE, to_rdmol, ase2rdmol
         write("tmp.pdb", ase_atoms)
-        #  rd_mol = Chem.rdmolfiles.MolFromPDBFile("tmp.pdb", removeHs=False)
 
         rd_mol = Chem.rdmolfiles.MolFromPDBFile("tmp.pdb", sanitize=True, removeHs=False)
         self._rmFileExist("tmp.pdb")
