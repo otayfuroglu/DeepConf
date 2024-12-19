@@ -1,18 +1,21 @@
 #! /usr/bin/env bash
 
-ligPrep_DIR="$HOME/ConfGen/"
-PYTHON_DIR="$HOME/.local/Miniconda3/envs/ANILIE/bin"
+ligPrep_DIR="$HOME/Desktop/DeepConf/"
+PYTHON_DIR="$HOME/miniconda3/bin"
 
-struct_dir=mol
+# struct_dir=./test_akocak
+struct_dir=./test_akocak
 
 # adding hydrogen if missing (yes/no) if yes, constraint heavy atoms and minimize hydrogens.
 add_hydrogen=no
 
 # set optizetions methods whichs availble in ASE (BFGS, LBFGS, GPMin, FIRE, Berny)
-optimization_method=FIRE
+optimization_method=BFGS
+# optimization_method=newtonraphson
+# optimization_method=gpmin
 
 # optimization ligand if desired before conformer generation (yes/no)
-pre_optimization_lig=no
+pre_optimization_lig=yes
 
 # generate conformer if desired (yes/no)
 genconformer=yes
@@ -42,22 +45,24 @@ optimization_conf=yes
 optimization_lig=no
 
 # set number of procssors for g16 calcultor (default=all cpu)
-nprocs=32
+nprocs=1
 
 # set thrshold fmax for optimization (default=0.01)
-thr_fmax=0.02
+thr_fmax=0.002
 
 #maximum iteration for optimization
 maxiter=50000
 
 # number of fold for conformer generation
-nfold=4
+nfold=2
 # to pick randomly extra conformer
 npick=0
 
+# to scale number of conformers
+nscale=10
 
 $PYTHON_DIR/python $ligPrep_DIR/runConfGen.py $struct_dir $add_hydrogen $caculator_type\
 	$optimization_method $optimization_conf $optimization_lig $pre_optimization_lig $genconformer\
-       	$nprocs $thr_fmax $maxiter $ETKDG $num_conformers $max_attempts $prune_rms_thresh $opt_prune_rms_thresh $opt_prune_diffE_thresh $nfold $npick
+       	$nprocs $thr_fmax $maxiter $ETKDG $num_conformers $max_attempts $prune_rms_thresh $opt_prune_rms_thresh $opt_prune_diffE_thresh $nfold $npick $nscale
 
 
