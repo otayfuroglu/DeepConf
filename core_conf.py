@@ -609,7 +609,7 @@ class confGen:
             from ase.optimize import Berny
             return Berny(ase_atoms)
         elif self.opt_method=="cg":
-            from ase.optimize.sciopz import SciPyFminCG
+            from ase.optimize.sciopt import SciPyFminCG
             return SciPyFminCG(ase_atoms)
         elif self.opt_method=="newtonraphson":
             from ase_optmizer_newton_raphson import NewtonRaphson
