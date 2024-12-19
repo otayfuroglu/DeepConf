@@ -386,6 +386,7 @@ class confGen:
                          enforceChirality=True,
                          nfold=2,
                          npick=2,
+                         nscale=1,
                         ):
 
         import copy
@@ -393,8 +394,8 @@ class confGen:
         #  self.addHwithRD()
         print("Woking on conformer generation process")
         mol = copy.deepcopy(self.rw_mol)
-        if numConfs == 0 or numConfs < self._getNumConfs(nfold, scaled=10):
-            numConfs = self._getNumConfs(nfold, scaled=10)
+        if numConfs == 0 or numConfs < self._getNumConfs(nfold, scaled=nscale):
+            numConfs = self._getNumConfs(nfold, scaled=nscale)
             print(f"Maximum number of conformers setting to {numConfs}")
 
         if ETKDG:
