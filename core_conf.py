@@ -21,6 +21,9 @@ from scipy.cluster.hierarchy import linkage, fcluster
 
 from random import sample
 
+from sklearn.linear_model import LinearRegression
+from ase.optimize.optimize import Optimizer
+
 NPROCS_ALL = int(cpu_count())
 print("Number of total cpu core: ", NPROCS_ALL)
 
@@ -88,6 +91,63 @@ def symmetricize(n: int, list1D: list) -> np.array:
                 dist_matrix[idx1, idx2] = list1D[i]
                 i += 1
     return dist_matrix + dist_matrix.T
+
+
+class RegressionCoordinateDescent(Optimizer):
+    """
+    Regression-based coordinate descent minimizer for ASE framework.
+    """
+    def __init__(self, atoms, maxiter=100, tol=1e-6, **kwargs):
+        Optimizer.__init__(self, atoms, restart=None, logfile='-', trajectory=None, **kwargs)
+        self.maxiter = maxiter
+        self.tol = tol
+
+    def step(self, f):
+        """Perform one step of the regression-based coordinate descent."""
+        positions = self.atoms.get_positions()
+        energy = self.atoms.get_potential_energy()
+
+        for i in range(len(positions)):
+            for j in range(3):  # x, y, z coordinates
+                coord_samples = np.linspace(positions[i, j] - 0.1, positions[i, j] + 0.1, 10)
+                energies = []
+
+                for sample in coord_samples:
+                    trial_positions = positions.copy()
+                    trial_positions[i, j] = sample
+                    self.atoms.set_positions(trial_positions)
+                    energies.append(self.atoms.get_potential_energy())
+
+                # Perform regression to approximate the energy surface
+                model = LinearRegression()
+                coord_samples = coord_samples.reshape(-1, 1)
+                model.fit(coord_samples, energies)
+
+                # Minimize the regression model
+                min_coord = -model.coef_[0] / (2 * model.intercept_)
+
+                # Ensure the coordinate is within the sample range
+                min_coord = np.clip(min_coord, coord_samples.min(), coord_samples.max())
+
+                # Update the coordinate
+                positions[i, j] = min_coord
+
+        self.atoms.set_positions(positions)
+        return positions, energy
+
+    def run(self, fmax=0.05, steps=100):
+        """Run the optimization until convergence or maximum steps."""
+        for step in range(self.maxiter):
+            positions, energy = self.step(self.atoms.get_forces())
+            max_force = np.linalg.norm(self.atoms.get_forces(), axis=1).max()
+
+            if max_force < fmax:
+                print(f"Converged at step {step + 1} with max force {max_force:.6f} eV/A.")
+                break
+            else:
+                print(f"Step {step + 1}: Energy = {energy:.6f} eV, Max force = {max_force:.6f} eV/A.")
+        else:
+            print("Reached maximum number of iterations without convergence.")
 
 
 class confGen:
@@ -614,6 +674,8 @@ class confGen:
         elif self.opt_method=="newtonraphson":
             from ase_optmizer_newton_raphson import NewtonRaphson
             return NewtonRaphson(ase_atoms)
+        elif self.opt_method=="regression":
+            return RegressionCoordinateDescent(ase_atoms)
 
     def _geomOptimizationConf(self, mol, conformerId):
         from ase.calculators.gaussian import GaussianOptimizer, Gaussian
