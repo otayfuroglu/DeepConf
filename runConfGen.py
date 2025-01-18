@@ -28,6 +28,7 @@ parser.add_argument("nprocs", type=int, default=nprocs_all)
 parser.add_argument("thr_fmax", type=float, default=0.05)
 parser.add_argument("maxiter", type=int, default=500)
 
+parser.add_argument("sample_md", nargs="?", default="No") # args for bool
 parser.add_argument("ETKDG", nargs="?", default="No") # args for bool
 parser.add_argument("num_conformers", type=int, default=50)
 parser.add_argument("max_attempts", type=int, default=100)
@@ -147,14 +148,30 @@ def runConfGen(file_name):
     lig.setOptParams(fmax=thr_fmax, maxiter=args.maxiter)
 
     if pre_optimization_lig:
+        ase_atoms = read(mol_path)
         print("Pre-Optimization process.. before confromer generations")
-        e = lig.geomOptimization()
+        e = lig.geomOptimization(ase_atoms)
         pre_e_file = open("%s/pre_%s%s_energy.txt"%(WORK_DIR, prefix, file_base) , "w")
         print(e, " eV", file=pre_e_file)
         lig.writeRWMol2File("%s/pre_%s%s.sdf"%(WORK_DIR, prefix, file_base), Energy=e)
 
-    if genconformer:
-        out_file_path="%s/%sminE_conformer.sdf"%(WORK_DIR, prefix)
+
+    # final conformers out file path
+    out_file_path="%s/%sminE_conformer.sdf"%(WORK_DIR, prefix)
+    if genconformer and sample_md:
+        lig.genGonformersWithMD(
+            file_path=out_file_path,
+            forcefield="uff",
+            timestep=2,
+            totalsteps=500000,
+            opt_prune_rms_thresh=opt_prune_rms_thresh,
+            opt_prune_diffE_thresh=opt_prune_diffE_thresh,
+            temperature=700,
+        )
+        quit()
+
+
+    elif genconformer:
         lig = setGenConformers(lig, out_file_path, mmCalculator)
         if lig is None:
             return None
@@ -182,6 +199,7 @@ if __name__ == "__main__":
     genconformer = getBoolStr(args.genconformer)
     ignore_hydrogen = getBoolStr(args.ignore_hydrogen)
     ETKDG = getBoolStr(args.ETKDG)
+    sample_md = getBoolStr(args.sample_md)
 
     nprocs = args.nprocs
     thr_fmax = args.thr_fmax

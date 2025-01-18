@@ -1,27 +1,29 @@
 #! /usr/bin/env bash
 
-ligPrep_DIR="$HOME/Desktop/DeepConf/"
+ligPrep_DIR="/arf/scratch/otayfuroglu/ConfGen/"
 PYTHON_DIR="$HOME/miniconda3/bin"
 
 # struct_dir=./test_akocak
-struct_dir=./test_akocak
+struct_dir=./geoms_several
 
 # adding hydrogen if missing (yes/no) if yes, constraint heavy atoms and minimize hydrogens.
 add_hydrogen=no
 
 # set optizetions methods whichs availble in ASE (BFGS, LBFGS, GPMin, FIRE, Berny)
-optimization_method=BFGS
+optimization_method=LBFGS
 # optimization_method=newtonraphson
 # optimization_method=gpmin
 
 # optimization ligand if desired before conformer generation (yes/no)
-pre_optimization_lig=yes
+pre_optimization_lig=no
 
 # generate conformer if desired (yes/no)
 genconformer=yes
 
+sample_md=yes
+
 #configuration for conformer generator parameters yes or no. No uses RDKit. if ETKG yes, max_attempts and prune_rms_threshold are redundant (not used).
-ETKDG=yes
+ETKDG=no
 num_conformers=1000
 max_attempts=100000
 
@@ -48,7 +50,7 @@ optimization_lig=no
 nprocs=1
 
 # set thrshold fmax for optimization (default=0.01)
-thr_fmax=0.002
+thr_fmax=0.01
 
 #maximum iteration for optimization
 maxiter=50000
@@ -63,6 +65,6 @@ nscale=10
 
 $PYTHON_DIR/python $ligPrep_DIR/runConfGen.py $struct_dir $add_hydrogen $caculator_type\
 	$optimization_method $optimization_conf $optimization_lig $pre_optimization_lig $genconformer\
-       	$nprocs $thr_fmax $maxiter $ETKDG $num_conformers $max_attempts $prune_rms_thresh $opt_prune_rms_thresh $opt_prune_diffE_thresh $nfold $npick $nscale
+       	$nprocs $thr_fmax $maxiter $sample_md $ETKDG $num_conformers $max_attempts $prune_rms_thresh $opt_prune_rms_thresh $opt_prune_diffE_thresh $nfold $npick $nscale
 
 

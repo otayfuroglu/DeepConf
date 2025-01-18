@@ -20,6 +20,7 @@ from scipy.cluster.vq import kmeans, vq, whiten
 from scipy.cluster.hierarchy import linkage, fcluster
 
 from random import sample
+import tqdm
 
 
 NPROCS_ALL = int(cpu_count())
@@ -213,10 +214,11 @@ class confGen:
 
         # optmization for just added H
         if self.addH:
+            ase_atoms = self.rwMol2AseAtoms()
             self.setOptMethod(opt_method="LBFGS")
             self.setOptParams(fmax=0.05, maxiter=200)
             self.setANI2XCalculator()
-            self.geomOptimization(fix_heavy_atoms=True)
+            self.geomOptimization(ase_atoms, fix_heavy_atoms=True)
 
     def addHwithRD(self):
         self.rw_mol = rdkit.Chem.rdmolops.AddHs(self.rw_mol, addCoords=True)
@@ -503,7 +505,7 @@ class confGen:
         file_csv.close()
 
         prefix = ""
-        PICKED_CONF_DIR = self.WORK_DIR
+        #  PICKED_CONF_DIR = self.WORK_DIR
         if optimization_conf:
             prefix = "opt_"
 
@@ -543,6 +545,101 @@ class confGen:
                 self._pruneOptConfs(cluster_conf, confs_energies, PICKED_CONF_DIR, opt_prune_diffE_thresh)
             else:
                 os.rename(f"{PICKED_CONF_DIR}/{confs_energies['FileName'][0]}", f"{PICKED_CONF_DIR}/{prefix}output.sdf")
+
+    def _increase_id(self):
+        self._id += 1
+
+    def genGonformersWithMD(self,
+                            file_path,
+                            forcefield,
+                            timestep,
+                            totalsteps,
+                            temperature,
+                            opt_prune_rms_thresh=0.2,
+                            opt_prune_diffE_thresh=0.001,
+                           ):
+
+        from ase_ff import OpenBabelFFCalculator
+        from ase.optimize import LBFGS
+        from ase.md.langevin import Langevin
+        from ase.md.velocitydistribution import MaxwellBoltzmannDistribution
+        from ase.units import fs
+
+        def tqdmMD():
+            pbar.update()
+
+        def opt_write_frame(ase_atoms):
+            #  write(f"md_traj.xyz", atoms, format='xyz', append=True)
+            rw_mol = self.aseAtoms2rwMol(ase_atoms)
+
+            #  if optimization_conf:
+            e = self.geomOptimization(ase_atoms, fix_heavy_atoms=False)
+            #  else:
+                #  e, ase_atoms = self._calcSPEnergy(mol, conformerId)
+
+            conf_file_path = "%s/%sconf_%d.sdf"%(PICKED_CONF_DIR, prefix, self._id)
+            #  save optimized structure  with rdkit as sdf
+            with Chem.rdmolfiles.SDWriter(conf_file_path) as writer:
+                rwmol = self.aseAtoms2rwMol(ase_atoms)
+                rwmol.SetProp("Energy", str(e))
+                rwmol.SetProp("_Name", f"{prefix}conf_{self._id}")
+                writer.write(rwmol)
+
+            print("%sconf_%d.sdf,%s,%s"%(prefix,
+                                         self._id,
+                                         e,
+                                         e/ase_atoms.get_number_of_atoms()),
+                  file=picked_file_csv)
+            self._increase_id()
+            # return openbebal UFF calcualtor after optimzation with the default calculator
+            ase_atoms.calc = calc_ff
+                #  write(f"{PICKED_CONF_DIR}/frame.extxyz", atoms, format='extxyz', append=True)
+
+        prefix = "opt_"
+
+        PICKED_CONF_DIR = self.WORK_DIR + f"/{prefix}picked_confs"
+        if not os.path.exists(PICKED_CONF_DIR):
+            os.mkdir(PICKED_CONF_DIR)
+
+        self._id = 0
+
+        picked_file_csv = open(f"{PICKED_CONF_DIR}/{prefix}picked_confs_energies.csv", "w")
+        print("FileName,Energy(eV),EnergyPerAtom(eV)", file=picked_file_csv)
+
+        calc_ff = OpenBabelFFCalculator(forcefield=forcefield)
+
+        ase_atoms = self.rwMol2AseAtoms()
+        ase_atoms.center(vacuum=10.0)
+        ase_atoms.pbc = True
+        ase_atoms.calc = calc_ff
+
+        optimizer = LBFGS(ase_atoms)
+        optimizer.run(fmax=0.001)
+
+        MaxwellBoltzmannDistribution(ase_atoms, temperature_K=temperature/2)
+
+        dynamics = Langevin(ase_atoms,
+                            timestep=timestep*fs,        # Timestep of 1 femtosecond
+                            temperature_K=temperature,      # Target temperature in Kelvin
+                            friction=0.01)          # Friction coefficient
+
+        pbar = tqdm.tqdm(total=totalsteps)
+        dynamics.attach(tqdmMD)
+
+        # pick 100 conf from MD
+        interval = totalsteps/100
+        dynamics.attach(opt_write_frame, interval=interval, ase_atoms=ase_atoms)
+        dynamics.run(steps=totalsteps)
+
+        picked_file_csv.close()
+
+        confs_energies = pd.read_csv(f"{PICKED_CONF_DIR}/{prefix}picked_confs_energies.csv")
+        cluster_conf = self._getClusterRMSDFromFiles(PICKED_CONF_DIR, rmsd_thresh=opt_prune_rms_thresh)
+        if cluster_conf != 0:
+            self._pruneOptConfs(cluster_conf, confs_energies, PICKED_CONF_DIR, opt_prune_diffE_thresh)
+        else:
+            os.rename(f"{PICKED_CONF_DIR}/{confs_energies['FileName'][0]}", f"{PICKED_CONF_DIR}/{prefix}output.sdf")
+
 
     def _calcEnergyWithMM(self, mol, conformerId, minimizeIts):
         ff = rdkit.Chem.AllChem.MMFFGetMoleculeForceField(
@@ -658,7 +755,7 @@ class confGen:
 
         return ase_atoms.get_potential_energy(), ase_atoms
 
-    def geomOptimization(self, fix_heavy_atoms=False):
+    def geomOptimization(self, ase_atoms, fix_heavy_atoms=False):
         from ase.calculators.gaussian import GaussianOptimizer
 
         if self.calculator is None:
@@ -668,7 +765,6 @@ class confGen:
             print("Error setting geometry optimizatian parameters for ASE. Please do it")
             exit(1)
 
-        ase_atoms = self.rwMol2AseAtoms()
         if fix_heavy_atoms:
             from ase.constraints import FixAtoms
             c = FixAtoms(indices=[atom.index for atom in ase_atoms if atom.symbol != 'H'])
@@ -728,7 +824,6 @@ class confGen:
         except:
             print("Warnings: Can not assign bond borders!")
             return rd_mol
-
 
     def writeAseAtoms(self, file_path):
         ase_atoms = self.rwMol2AseAtoms()
