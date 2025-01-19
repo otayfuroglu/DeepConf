@@ -29,7 +29,7 @@ parser.add_argument("thr_fmax", type=float, default=0.05)
 parser.add_argument("maxiter", type=int, default=500)
 
 parser.add_argument("sample_md", nargs="?", default="No") # args for bool
-parser.add_argument("external_md_conf_path", type=str, default="")
+parser.add_argument("external_md_confs_file", type=str, default="")
 parser.add_argument("ETKDG", nargs="?", default="No") # args for bool
 parser.add_argument("num_conformers", type=int, default=50)
 parser.add_argument("max_attempts", type=int, default=100)
@@ -110,10 +110,7 @@ def runConfGen(file_name):
 
     file_base = file_name.split(".")[0]
     #create destination directory
-    if external_md_conf_path:
-        WORK_DIR = external_md_conf_path.split(".")[0]
-    else:
-        WORK_DIR = file_base
+    WORK_DIR = file_base
     if os.path.exists(WORK_DIR):
         shutil.rmtree(WORK_DIR)
     os.mkdir(WORK_DIR)
@@ -171,7 +168,7 @@ def runConfGen(file_name):
             opt_prune_rms_thresh=opt_prune_rms_thresh,
             opt_prune_diffE_thresh=opt_prune_diffE_thresh,
             temperature=700,
-            external_md_conf_path=external_md_conf_path
+            external_md_confs_file=mol_path
         )
         print("Conformer generation process is done")
     elif genconformer:
@@ -203,9 +200,9 @@ if __name__ == "__main__":
     ignore_hydrogen = getBoolStr(args.ignore_hydrogen)
     ETKDG = getBoolStr(args.ETKDG)
     sample_md = getBoolStr(args.sample_md)
-    external_md_conf_path = args.external_md_conf_path
-    if external_md_conf_path.lower() == "no":
-        external_md_conf_path = getBoolStr(external_md_conf_path)
+    external_md_confs_file = args.external_md_confs_file
+    if external_md_confs_file.lower() == "no":
+        external_md_confs_file = getBoolStr(external_md_confs_file)
 
     nprocs = args.nprocs
     thr_fmax = args.thr_fmax

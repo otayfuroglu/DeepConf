@@ -557,7 +557,7 @@ class confGen:
                             temperature,
                             opt_prune_rms_thresh=0.2,
                             opt_prune_diffE_thresh=0.001,
-                            external_md_conf_path=None
+                            external_md_confs_file=None
                            ):
 
         from ase_ff import OpenBabelFFCalculator
@@ -588,7 +588,7 @@ class confGen:
             self._increase_id()
             picked_file_csv.flush()
 
-            if not external_md_conf_path:
+            if not external_md_confs_file:
                 # return openbebal UFF calcualtor after optimzation with the default calculator
                 ase_atoms.calc = calc_ff
 
@@ -603,8 +603,8 @@ class confGen:
         picked_file_csv = open(f"{PICKED_CONF_DIR}/{prefix}picked_confs_energies.csv", "w")
         print("FileName,Energy(eV),EnergyPerAtom(eV)", file=picked_file_csv)
 
-        if external_md_conf_path:
-            for ase_atoms in read(external_md_conf_path, index=":"):
+        if external_md_confs_file:
+            for ase_atoms in read(external_md_confs_file, index=":"):
                 opt_write_frame(ase_atoms)
         #start MD to sample confermers
         else:

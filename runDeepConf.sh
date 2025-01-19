@@ -1,10 +1,10 @@
 #! /usr/bin/env bash
 
-ligPrep_DIR="/arf/scratch/otayfuroglu/ConfGen/"
+ligPrep_DIR="/arf/scratch/otayfuroglu/DeepConf/"
 PYTHON_DIR="$HOME/miniconda3/bin"
 
 # struct_dir=./test_akocak
-struct_dir=./geoms_several
+struct_dir=./geoms_md
 
 # adding hydrogen if missing (yes/no) if yes, constraint heavy atoms and minimize hydrogens.
 add_hydrogen=no
@@ -21,6 +21,8 @@ pre_optimization_lig=no
 genconformer=yes
 
 sample_md=yes
+# external_md_conf_path=no
+external_md_confs_file=figS3e_3_molecule6_100frm.xyz
 
 #configuration for conformer generator parameters yes or no. No uses RDKit. if ETKG yes, max_attempts and prune_rms_threshold are redundant (not used).
 ETKDG=no
@@ -65,6 +67,8 @@ nscale=10
 
 $PYTHON_DIR/python $ligPrep_DIR/runConfGen.py $struct_dir $add_hydrogen $caculator_type\
 	$optimization_method $optimization_conf $optimization_lig $pre_optimization_lig $genconformer\
-       	$nprocs $thr_fmax $maxiter $sample_md $ETKDG $num_conformers $max_attempts $prune_rms_thresh $opt_prune_rms_thresh $opt_prune_diffE_thresh $nfold $npick $nscale
+       	$nprocs $thr_fmax $maxiter $sample_md $external_md_confs_file\
+	$ETKDG $num_conformers $max_attempts $prune_rms_thresh $opt_prune_rms_thresh\
+	$opt_prune_diffE_thresh $nfold $npick $nscale
 
 
