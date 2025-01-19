@@ -106,7 +106,11 @@ def setGenConformers(lig, out_file_path, mmCalculator):
 #  @calcFuncRunTime
 def runConfGen(file_name):
     "Starting ligand preparetion process... "
+    external_md_confs_file_path = None
     mol_path= "%s/%s"%(structure_dir, file_name)
+    if external_md_confs_file:
+       external_md_confs_file_path = mol_path
+
 
     file_base = file_name.split(".")[0]
     #create destination directory
@@ -168,7 +172,7 @@ def runConfGen(file_name):
             opt_prune_rms_thresh=opt_prune_rms_thresh,
             opt_prune_diffE_thresh=opt_prune_diffE_thresh,
             temperature=700,
-            external_md_confs_file=mol_path
+            external_md_confs_file_path=external_md_confs_file_path
         )
         print("Conformer generation process is done")
     elif genconformer:
