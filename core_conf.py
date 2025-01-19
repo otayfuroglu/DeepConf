@@ -1,7 +1,7 @@
 #
 from openbabel import openbabel, pybel
 from ase import Atoms
-from ase.io import write
+from ase.io import read, write
 
 import rdkit
 from  rdkit import Chem
@@ -557,6 +557,7 @@ class confGen:
                             temperature,
                             opt_prune_rms_thresh=0.2,
                             opt_prune_diffE_thresh=0.001,
+                            external_md_conf_path=None
                            ):
 
         from ase_ff import OpenBabelFFCalculator
@@ -569,14 +570,8 @@ class confGen:
             pbar.update()
 
         def opt_write_frame(ase_atoms):
-            #  write(f"md_traj.xyz", atoms, format='xyz', append=True)
-            rw_mol = self.aseAtoms2rwMol(ase_atoms)
-
-            #  if optimization_conf:
+            ase_atoms.pbc = False
             e = self.geomOptimization(ase_atoms, fix_heavy_atoms=False)
-            #  else:
-                #  e, ase_atoms = self._calcSPEnergy(mol, conformerId)
-
             conf_file_path = "%s/%sconf_%d.sdf"%(PICKED_CONF_DIR, prefix, self._id)
             #  save optimized structure  with rdkit as sdf
             with Chem.rdmolfiles.SDWriter(conf_file_path) as writer:
@@ -591,9 +586,11 @@ class confGen:
                                          e/ase_atoms.get_number_of_atoms()),
                   file=picked_file_csv)
             self._increase_id()
-            # return openbebal UFF calcualtor after optimzation with the default calculator
-            ase_atoms.calc = calc_ff
-                #  write(f"{PICKED_CONF_DIR}/frame.extxyz", atoms, format='extxyz', append=True)
+            picked_file_csv.flush()
+
+            if not external_md_conf_path:
+                # return openbebal UFF calcualtor after optimzation with the default calculator
+                ase_atoms.calc = calc_ff
 
         prefix = "opt_"
 
@@ -606,30 +603,35 @@ class confGen:
         picked_file_csv = open(f"{PICKED_CONF_DIR}/{prefix}picked_confs_energies.csv", "w")
         print("FileName,Energy(eV),EnergyPerAtom(eV)", file=picked_file_csv)
 
-        calc_ff = OpenBabelFFCalculator(forcefield=forcefield)
+        if external_md_conf_path:
+            for ase_atoms in read(external_md_conf_path, index=":"):
+                opt_write_frame(ase_atoms)
+        #start MD to sample confermers
+        else:
+            calc_ff = OpenBabelFFCalculator(forcefield=forcefield)
 
-        ase_atoms = self.rwMol2AseAtoms()
-        ase_atoms.center(vacuum=10.0)
-        ase_atoms.pbc = True
-        ase_atoms.calc = calc_ff
+            ase_atoms = self.rwMol2AseAtoms()
+            ase_atoms.center(vacuum=10.0)
+            ase_atoms.pbc = True
+            ase_atoms.calc = calc_ff
 
-        optimizer = LBFGS(ase_atoms)
-        optimizer.run(fmax=0.001)
+            optimizer = LBFGS(ase_atoms)
+            optimizer.run(fmax=0.001)
 
-        MaxwellBoltzmannDistribution(ase_atoms, temperature_K=temperature/2)
+            MaxwellBoltzmannDistribution(ase_atoms, temperature_K=temperature/2)
 
-        dynamics = Langevin(ase_atoms,
-                            timestep=timestep*fs,        # Timestep of 1 femtosecond
-                            temperature_K=temperature,      # Target temperature in Kelvin
-                            friction=0.01)          # Friction coefficient
+            dynamics = Langevin(ase_atoms,
+                                timestep=timestep*fs,        # Timestep of 1 femtosecond
+                                temperature_K=temperature,      # Target temperature in Kelvin
+                                friction=0.01)          # Friction coefficient
 
-        pbar = tqdm.tqdm(total=totalsteps)
-        dynamics.attach(tqdmMD)
+            pbar = tqdm.tqdm(total=totalsteps)
+            dynamics.attach(tqdmMD)
 
-        # pick 100 conf from MD
-        interval = totalsteps/100
-        dynamics.attach(opt_write_frame, interval=interval, ase_atoms=ase_atoms)
-        dynamics.run(steps=totalsteps)
+            # pick 100 conf from MD
+            interval = totalsteps/100
+            dynamics.attach(opt_write_frame, interval=interval, ase_atoms=ase_atoms)
+            dynamics.run(steps=totalsteps)
 
         picked_file_csv.close()
 
