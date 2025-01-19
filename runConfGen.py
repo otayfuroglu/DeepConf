@@ -168,9 +168,7 @@ def runConfGen(file_name):
             opt_prune_diffE_thresh=opt_prune_diffE_thresh,
             temperature=700,
         )
-        quit()
-
-
+        print("Conformer generation process is done")
     elif genconformer:
         lig = setGenConformers(lig, out_file_path, mmCalculator)
         if lig is None:
