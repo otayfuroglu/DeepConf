@@ -28,8 +28,6 @@ parser.add_argument("nprocs", type=int, default=nprocs_all)
 parser.add_argument("thr_fmax", type=float, default=0.05)
 parser.add_argument("maxiter", type=int, default=500)
 
-parser.add_argument("sample_md", nargs="?", default="No") # args for bool
-parser.add_argument("external_md_confs_file", type=str, default="")
 parser.add_argument("ETKDG", nargs="?", default="No") # args for bool
 parser.add_argument("num_conformers", type=int, default=50)
 parser.add_argument("max_attempts", type=int, default=100)
@@ -106,11 +104,7 @@ def setGenConformers(lig, out_file_path, mmCalculator):
 #  @calcFuncRunTime
 def runConfGen(file_name):
     "Starting ligand preparetion process... "
-    external_md_confs_file_path = None
     mol_path= "%s/%s"%(structure_dir, file_name)
-    if external_md_confs_file:
-       external_md_confs_file_path = mol_path
-
 
     file_base = file_name.split(".")[0]
     #create destination directory
@@ -153,29 +147,14 @@ def runConfGen(file_name):
     lig.setOptParams(fmax=thr_fmax, maxiter=args.maxiter)
 
     if pre_optimization_lig:
-        ase_atoms = read(mol_path)
         print("Pre-Optimization process.. before confromer generations")
-        e = lig.geomOptimization(ase_atoms)
+        e = lig.geomOptimization()
         pre_e_file = open("%s/pre_%s%s_energy.txt"%(WORK_DIR, prefix, file_base) , "w")
         print(e, " eV", file=pre_e_file)
         lig.writeRWMol2File("%s/pre_%s%s.sdf"%(WORK_DIR, prefix, file_base), Energy=e)
 
-
-    # final conformers out file path
-    out_file_path="%s/%sminE_conformer.sdf"%(WORK_DIR, prefix)
-    if genconformer and sample_md:
-        lig.genGonformersWithMD(
-            file_path=out_file_path,
-            forcefield="uff",
-            timestep=2,
-            totalsteps=500000,
-            opt_prune_rms_thresh=opt_prune_rms_thresh,
-            opt_prune_diffE_thresh=opt_prune_diffE_thresh,
-            temperature=700,
-            external_md_confs_file_path=external_md_confs_file_path
-        )
-        print("Conformer generation process is done")
-    elif genconformer:
+    if genconformer:
+        out_file_path="%s/%sminE_conformer.sdf"%(WORK_DIR, prefix)
         lig = setGenConformers(lig, out_file_path, mmCalculator)
         if lig is None:
             return None
@@ -203,10 +182,6 @@ if __name__ == "__main__":
     genconformer = getBoolStr(args.genconformer)
     ignore_hydrogen = getBoolStr(args.ignore_hydrogen)
     ETKDG = getBoolStr(args.ETKDG)
-    sample_md = getBoolStr(args.sample_md)
-    external_md_confs_file = args.external_md_confs_file
-    if external_md_confs_file.lower() == "no":
-        external_md_confs_file = getBoolStr(external_md_confs_file)
 
     nprocs = args.nprocs
     thr_fmax = args.thr_fmax
