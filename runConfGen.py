@@ -135,6 +135,8 @@ def runConfGen(file_name):
 
     if "ani2x" in calculator_type.lower():
         lig.setANI2XCalculator()
+    if "aimnet2" in calculator_type.lower():
+        lig.setAIMNet2alculator()
     if "nequip" in calculator_type.lower():
         lig.setNequIPCalculator(nequip_model_path)
     elif "g16" in calculator_type.lower():

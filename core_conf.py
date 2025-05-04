@@ -588,6 +588,14 @@ class confGen:
         self.calculator = NequIPCalculator.from_deployed_model(
             model_path=model_path, device=device)
 
+    def setAIMNet2alculator(self):
+        from aimnet2calc import AIMNet2ASE
+        print("Nuber of CUDA devices: ", torch.cuda.device_count())
+        device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
+
+        self.calculator = AIMNet2ASE(
+            'aimnet2', charge=Chem.rdmolops.GetFormalCharge(self.rw_mol))
+
     def _calcSPEnergy(self, mol, conformerId):
         if self.calculator is None:
             print("Error: Calculator not found. Please set any calculator")
