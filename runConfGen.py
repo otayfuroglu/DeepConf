@@ -19,6 +19,7 @@ parser = argparse.ArgumentParser(description="Give something ...")
 parser.add_argument("structure_dir", type=str)
 parser.add_argument("ignore_hydrogen", nargs="?", default="No") # args for bool
 parser.add_argument("calculator_type", type=str)
+parser.add_argument("local_model_path", type=str)
 parser.add_argument("optimization_method", nargs="?", default="No") # args for bool
 parser.add_argument("optimization_conf", nargs="?", default="No") # args for bool
 parser.add_argument("optimization_lig", nargs="?", default="No") # args for bool
@@ -134,6 +135,8 @@ def runConfGen(file_name):
 
     if "ani2x" in calculator_type.lower():
         lig.setANI2XCalculator()
+    if "nequip" in calculator_type.lower():
+        lig.setNequIPCalculator(nequip_model_path)
     elif "g16" in calculator_type.lower():
         lig = setG16calculator(lig, file_base, label="calculation", WORK_DIR=WORK_DIR)
     elif "uff" in calculator_type.lower():
@@ -173,6 +176,9 @@ if __name__ == "__main__":
     args = parser.parse_args()
     structure_dir = args.structure_dir
     calculator_type = args.calculator_type
+    local_model_path = args.local_model_path
+    if "nequip" in calculator_type.lower():
+        nequip_model_path = local_model_path
 
     optimization_method = args.optimization_method
 

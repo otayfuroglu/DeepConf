@@ -580,8 +580,15 @@ class confGen:
 
         self.calculator = torchani.models.ANI2x().to(device).ase()
 
-    def _calcSPEnergy(self, mol, conformerId):
+    def setNequIPCalculator(self, model_path):
+        from nequip.ase import NequIPCalculator
+        print("Nuber of CUDA devices: ", torch.cuda.device_count())
+        device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
 
+        self.calculator = NequIPCalculator.from_deployed_model(
+            model_path=model_path, device=device)
+
+    def _calcSPEnergy(self, mol, conformerId):
         if self.calculator is None:
             print("Error: Calculator not found. Please set any calculator")
             sys.exit(1)
