@@ -70,10 +70,35 @@ ligPrep_DIR="/path/to/DeepConf"
 PYTHON_DIR="/path/to/conda/envs/DeepConf/bin"
 struct_dir="structures"
 ```
+
 ### Run
 
 ```bash
 bash runDeepConf.sh
 ```
 
+🔧 Parameters (for runConfGen.py)
+
+| Parameter                | Description                             |
+| ------------------------ | --------------------------------------- |
+| `structure_dir`          | Input directory of ligands              |
+| `ignore_hydrogen`        | Add hydrogens? (`yes`/`no`)             |
+| `calculator_type`        | `ani2x`, `g16`, `uff`                   |
+| `optimization_method`    | E.g. `BFGS`, `LBFGS`                    |
+| `optimization_conf`      | Optimize conformers (`yes`/`no`)        |
+| `optimization_lig`       | Global ligand optimization (`yes`/`no`) |
+| `pre_optimization_lig`   | Pre-conformer ligand opt (`yes`/`no`)   |
+| `genconformer`           | Generate conformers (`yes`/`no`)        |
+| `nprocs`                 | Number of CPUs                          |
+| `thr_fmax`               | Force threshold (default: 0.05)         |
+| `maxiter`                | Max optimization steps                  |
+| `ETKDG`                  | Use RDKit ETKDG (`yes`/`no`)            |
+| `num_conformers`         | Number to generate                      |
+| `max_attempts`           | Max embedding attempts                  |
+| `prune_rms_thresh`       | RMSD pruning threshold                  |
+| `opt_prune_rms_thresh`   | Post-opt RMSD threshold                 |
+| `opt_prune_diffE_thresh` | Energy diff threshold (eV)              |
+| `nfold`                  | Pre-prune conformer multiplier          |
+| `npick`                  | Final conformer count                   |
+| `nscale`                 | Energy scale factor                     |
 
