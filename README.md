@@ -122,3 +122,15 @@ ligand1/
 ├── global_ligand1.sdf
 ├── global_ligand1_energy.txt
 ```
+
+Also:
+
+timings.csv – Processing time per ligand
+failed_files.csv – Ligands that failed during execution
+
+# 📌 Summary
+⚡ ANI-ML (ANI2x) conformer optimization
+🧪 RDKit + ETKDG conformer generation
+🧠 Pruning based on RMSD and energy thresholds
+🧬 UFF and G16 support
+🔗 Easy integration into pipelines
