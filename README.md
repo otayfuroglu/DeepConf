@@ -111,7 +111,7 @@ ligands yes ani2x BFGS yes yes yes yes \
 8 0.05 500 yes 50 100 0.2 0.2 0.001 2 2 2
 ```
 
-## 📂 Output
+### 📂 Output
 Each ligand generates its own folder with outputs:
 
 ```bash
