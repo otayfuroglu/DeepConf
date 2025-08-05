@@ -102,7 +102,9 @@ bash runDeepConf.sh
 | `npick`                  | Final conformer count                   |
 | `nscale`                 | Energy scale factor                     |
 
-### ▶️ Example Usage
+
+### ▶️ Example Usage
+
 ```bash
 python runConfGen.py \
 ligands yes ani2x BFGS yes yes yes yes \
