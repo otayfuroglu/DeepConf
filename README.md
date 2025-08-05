@@ -102,9 +102,7 @@ bash runDeepConf.sh
 | `npick`                  | Final conformer count                   |
 | `nscale`                 | Energy scale factor                     |
 
-
-## ▶️ Example Usage
-
+### ▶️ Example Usage
 ```bash
 python runConfGen.py \
 ligands yes ani2x BFGS yes yes yes yes \
@@ -124,9 +122,8 @@ ligand1/
 ```
 
 Also:
-
-timings.csv – Processing time per ligand
-failed_files.csv – Ligands that failed during execution
+- timings.csv – Processing time per ligand
+- failed_files.csv – Ligands that failed during execution
 
 # 📌 Summary
 - ⚡ ANI-ML (ANI2x) conformer optimization
