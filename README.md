@@ -71,7 +71,7 @@ PYTHON_DIR="/path/to/conda/envs/DeepConf/bin"
 struct_dir="structures"
 ```
 
-### Run
+### Run
 
 ```bash
 bash runDeepConf.sh
@@ -102,3 +102,23 @@ bash runDeepConf.sh
 | `npick`                  | Final conformer count                   |
 | `nscale`                 | Energy scale factor                     |
 
+
+## ▶️ Example Usage
+
+```bash
+python runConfGen.py \
+ligands yes ani2x BFGS yes yes yes yes \
+8 0.05 500 yes 50 100 0.2 0.2 0.001 2 2 2
+```
+
+## 📂 Output
+Each ligand generates its own folder with outputs:
+
+```bash
+ligand1/
+├── pre_opt_ligand1.sdf
+├── pre_opt_ligand1_energy.txt
+├── minE_conformer.sdf
+├── global_ligand1.sdf
+├── global_ligand1_energy.txt
+```
