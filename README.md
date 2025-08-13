@@ -1,4 +1,4 @@
-# 🧠 DeepConf
+# DeepConf
 
 **DeepConf** is a tool for exploring low-energy conformations of small molecules using machine learning potentials. It leverages ANI-ML, RDKit, TorchANI, and optionally Gaussian16 to generate bioactive conformers for downstream tasks like docking or MD simulations.
 
